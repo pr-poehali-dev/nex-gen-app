@@ -32,6 +32,14 @@
       "path": "/?action=login",
       "body": {"login": "testuser99", "password": "secret123"},
       "expectedStatus": 400
+    },
+    {
+      "name": "GET chat_get — список сообщений",
+      "method": "GET",
+      "path": "/?action=chat_get",
+      "expectedStatus": 200,
+      "expectedBody": {"messages": []},
+      "bodyMatcher": "partial"
     }
   ]
 }

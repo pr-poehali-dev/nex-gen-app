@@ -388,6 +388,53 @@ def handler(event: dict, context) -> dict:
             cur.close(); conn.close()
             return ok({'success': True, 'name_color': row[0] or '' if row else '', 'name_effect': row[1] or '' if row else ''})
 
+        # Отправить сообщение в общий чат
+        if action == 'chat_send':
+            user = get_user_by_session(cur, session_id) if session_id else None
+            if not user:
+                cur.close(); conn.close()
+                return err('Необходима авторизация', 401)
+            text = (body.get('text') or '').strip()
+            if not text:
+                cur.close(); conn.close()
+                return err('Пустое сообщение')
+            if len(text) > 500:
+                cur.close(); conn.close()
+                return err('Слишком длинное сообщение (макс. 500 символов)')
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.chat_messages (user_id, text) VALUES (%s, %s) RETURNING id, created_at",
+                (user['id'], text)
+            )
+            row = cur.fetchone()
+            conn.commit()
+            cur.execute(f"SELECT avatar_url, name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
+            urow = cur.fetchone()
+            cur.close(); conn.close()
+            return ok({
+                'id': row[0], 'text': text, 'created_at': str(row[1]),
+                'username': user['username'], 'role': user['role'],
+                'avatar_url': urow[0] or '' if urow else '',
+                'name_color': urow[1] or '' if urow else '',
+                'name_effect': urow[2] or '' if urow else '',
+            })
+
+    # GET общий чат
+    if method == 'GET' and action == 'chat_get':
+        cur.execute(f"""
+            SELECT m.id, m.text, m.created_at, u.username, u.avatar_url, u.name_color, u.name_effect, u.role
+            FROM {SCHEMA}.chat_messages m
+            JOIN {SCHEMA}.users u ON u.id = m.user_id
+            ORDER BY m.created_at DESC
+            LIMIT 80
+        """)
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+        return ok({'messages': [
+            {'id': r[0], 'text': r[1], 'created_at': str(r[2]), 'username': r[3],
+             'avatar_url': r[4] or '', 'name_color': r[5] or '', 'name_effect': r[6] or '', 'role': r[7]}
+            for r in reversed(rows)
+        ]})
+
     cur.close(); conn.close()
     return err('Неверный запрос', 400)
 

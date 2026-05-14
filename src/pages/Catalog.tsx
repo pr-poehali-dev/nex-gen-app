@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/icon'
 import { getCachedUser } from '@/lib/auth'
+import ChatPanel from '@/components/ui/ChatPanel'
 
 const GENRES = ['Все', 'Хоррор', 'Мистика', 'Психологический триллер', 'Крипипаста']
 const API_URL = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
@@ -82,6 +83,7 @@ export default function Catalog() {
               <span className="hidden sm:inline">Войти</span>
             </button>
           )}
+          <ChatPanel />
           <button onClick={() => navigate('/submit')} className="flex items-center gap-1.5 text-[#8B0000] hover:text-red-400 transition-colors text-sm">
             <Icon name="PenLine" size={16} />
             <span className="hidden sm:inline">Предложить</span>
