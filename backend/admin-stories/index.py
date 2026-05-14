@@ -49,10 +49,21 @@ def handler(event: dict, context) -> dict:
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
         submission_id = body.get('id')
-        action = body.get('action')  # 'approve' | 'reject'
+        action = body.get('action')  # 'approve' | 'reject' | 'delete'
 
-        if not submission_id or action not in ('approve', 'reject'):
-            return err('Укажи id и action (approve/reject)')
+        if not submission_id or action not in ('approve', 'reject', 'delete'):
+            return err('Укажи id и action (approve/reject/delete)')
+
+        if action == 'delete':
+            cur.execute(
+                f"DELETE FROM {SCHEMA}.story_submissions WHERE id = %s RETURNING id",
+                (submission_id,)
+            )
+            if cur.rowcount == 0:
+                conn.rollback(); cur.close(); conn.close()
+                return err('История не найдена', 404)
+            conn.commit(); cur.close(); conn.close()
+            return ok({'success': True, 'id': submission_id, 'deleted': True})
 
         new_status = 'approved' if action == 'approve' else 'rejected'
         cur.execute(
@@ -60,14 +71,10 @@ def handler(event: dict, context) -> dict:
             (new_status, submission_id)
         )
         if cur.rowcount == 0:
-            conn.rollback()
-            cur.close()
-            conn.close()
+            conn.rollback(); cur.close(); conn.close()
             return err('Заявка не найдена', 404)
 
-        conn.commit()
-        cur.close()
-        conn.close()
+        conn.commit(); cur.close(); conn.close()
         return ok({'success': True, 'id': submission_id, 'status': new_status})
 
     return err('Method not allowed', 405)

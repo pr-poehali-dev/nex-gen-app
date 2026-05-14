@@ -77,7 +77,7 @@ export default function Admin() {
     setLoginLoading(false)
   }
 
-  const moderateStory = async (id: number, action: 'approve' | 'reject') => {
+  const moderateStory = async (id: number, action: 'approve' | 'reject' | 'delete') => {
     setStoryActionLoading(id)
     const res = await fetch(STORIES_API, {
       method: 'POST',
@@ -85,9 +85,14 @@ export default function Admin() {
       body: JSON.stringify({ id, action }),
     })
     if (res.ok) {
-      const newStatus = action === 'approve' ? 'approved' : 'rejected'
-      setStories(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as Submission['status'] } : s))
-      setExpandedStory(null)
+      if (action === 'delete') {
+        setStories(prev => prev.filter(s => s.id !== id))
+        setExpandedStory(null)
+      } else {
+        const newStatus = action === 'approve' ? 'approved' : 'rejected'
+        setStories(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as Submission['status'] } : s))
+        setExpandedStory(null)
+      }
     }
     setStoryActionLoading(null)
   }
@@ -213,17 +218,27 @@ export default function Admin() {
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
                             <div className="px-5 pb-5">
                               <div className="text-white/50 text-sm leading-7 whitespace-pre-wrap mb-5 max-h-64 overflow-y-auto pr-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>{story.text}</div>
-                              {story.status === 'pending' ? (
-                                <div className="flex gap-3">
-                                  <button onClick={() => moderateStory(story.id, 'approve')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm transition-all" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
-                                    {storyActionLoading === story.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Check" size={14} />}
-                                    Опубликовать
-                                  </button>
-                                  <button onClick={() => moderateStory(story.id, 'reject')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
-                                    <Icon name="X" size={14} /> Отклонить
-                                  </button>
-                                </div>
-                              ) : <p className="text-white/20 text-xs">Решение уже принято</p>}
+                              <div className="flex gap-3 flex-wrap">
+                                {story.status === 'pending' && (
+                                  <>
+                                    <button onClick={() => moderateStory(story.id, 'approve')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm transition-all" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
+                                      {storyActionLoading === story.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Check" size={14} />}
+                                      Опубликовать
+                                    </button>
+                                    <button onClick={() => moderateStory(story.id, 'reject')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
+                                      <Icon name="X" size={14} /> Отклонить
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => { if (confirm('Удалить историю безвозвратно?')) moderateStory(story.id, 'delete') }}
+                                  disabled={storyActionLoading === story.id}
+                                  className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm ml-auto transition-all hover:bg-red-950"
+                                  style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}
+                                >
+                                  <Icon name="Trash2" size={14} /> Удалить
+                                </button>
+                              </div>
                             </div>
                           </motion.div>
                         )}
