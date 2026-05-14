@@ -48,9 +48,9 @@ def handler(event: dict, context) -> dict:
     # POST — добавить комментарий
     if method == 'POST':
         user = get_user(cur, session_id)
-        if not user or user['role'] not in ('admin', 'moderator'):
+        if not user:
             cur.close(); conn.close()
-            return err('Только модераторы и администраторы могут оставлять комментарии', 403)
+            return err('Необходима авторизация', 401)
         body = json.loads(event.get('body') or '{}')
         story_id = body.get('story_id')
         text = (body.get('text') or '').strip()

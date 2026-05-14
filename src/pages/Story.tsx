@@ -40,7 +40,7 @@ export default function Story() {
   const navigate = useNavigate()
   const currentUser = getCachedUser()
   const sid = getSessionId()
-  const canComment = currentUser && (currentUser.role === 'admin' || currentUser.role === 'moderator')
+  const canComment = !!currentUser
 
   const [story, setStory] = useState<Story | null>(null)
   const [loading, setLoading] = useState(true)
@@ -147,13 +147,15 @@ export default function Story() {
         <div className="mt-16">
           <h2 className="text-white/60 text-xs uppercase tracking-widest mb-6 flex items-center gap-2">
             <Icon name="MessageSquare" size={13} />
-            Комментарии редакции
+            Комментарии
             {comments.length > 0 && <span className="text-white/25">· {comments.length}</span>}
           </h2>
 
           {/* Список */}
           {comments.length === 0 && !canComment && (
-            <p className="text-white/20 text-sm">Комментариев пока нет.</p>
+            <p className="text-white/20 text-sm">
+              <button onClick={() => navigate('/login')} className="text-[#8B0000] hover:text-red-400 transition-colors">Войди</button>, чтобы оставить комментарий.
+            </p>
           )}
 
           <div className="space-y-5 mb-8">

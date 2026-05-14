@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
-import { AUTH_URL } from '@/lib/auth'
+import { AUTH_URL, getCachedUser } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -40,6 +40,7 @@ function joinDate(iso: string) {
 export default function Profile() {
   const { username } = useParams()
   const navigate = useNavigate()
+  const me = getCachedUser()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -116,6 +117,16 @@ export default function Profile() {
               </div>
               {profile.bio && (
                 <p className="text-white/40 text-sm mt-3 leading-6">{profile.bio}</p>
+              )}
+              {/* Кнопка написать — только авторизованным, не самому себе */}
+              {me && me.username !== profile.username && (
+                <button
+                  onClick={() => navigate(`/messages/${profile.id}`)}
+                  className="mt-3 flex items-center gap-2 px-3 py-1.5 text-xs border rounded-sm transition-all hover:bg-[#8B0000] hover:border-[#8B0000] hover:text-white"
+                  style={{ borderColor: 'rgba(139,0,0,0.4)', color: 'rgba(139,0,0,0.8)' }}
+                >
+                  <Icon name="MessageSquare" size={12} /> Написать
+                </button>
               )}
             </div>
           </div>

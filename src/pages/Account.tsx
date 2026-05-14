@@ -301,6 +301,10 @@ export default function Account() {
                 <Icon name="ChevronRight" size={15} className="text-white/20" />
               </button>
             )}
+            <button onClick={() => navigate('/messages')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+              <span className="flex items-center gap-3"><Icon name="MessageSquare" size={15} className="text-[#8B0000]" /> Личные сообщения</span>
+              <Icon name="ChevronRight" size={15} className="text-white/20" />
+            </button>
             <button onClick={() => navigate('/submit')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
               <span className="flex items-center gap-3"><Icon name="PenLine" size={15} className="text-[#8B0000]" /> Предложить историю</span>
               <Icon name="ChevronRight" size={15} className="text-white/20" />
