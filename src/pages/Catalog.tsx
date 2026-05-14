@@ -14,6 +14,7 @@ interface Story {
   genre: string
   text: string
   created_at: string
+  views: number
 }
 
 function excerpt(text: string) {
@@ -174,6 +175,12 @@ export default function Catalog() {
                       <Icon name="Clock" size={12} />
                       {readTime(story.text)}
                     </span>
+                    {story.views > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Icon name="Eye" size={12} />
+                        {story.views.toLocaleString('ru-RU')}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">

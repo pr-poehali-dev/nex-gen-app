@@ -107,10 +107,16 @@ def handler(event: dict, context) -> dict:
         cur.close(); conn.close()
         return ok({'id': row[0], 'title': row[1], 'author_name': row[2], 'genre': row[3], 'text': row[4], 'created_at': str(row[5])})
 
-    # GET список историй
-    cur.execute(
-        f"SELECT id, title, author_name, genre, text, created_at FROM {SCHEMA}.story_submissions WHERE status = 'approved' ORDER BY created_at DESC"
-    )
+    # GET список историй с количеством просмотров
+    cur.execute(f"""
+        SELECT s.id, s.title, s.author_name, s.genre, s.text, s.created_at,
+               COUNT(v.id) AS views
+        FROM {SCHEMA}.story_submissions s
+        LEFT JOIN {SCHEMA}.story_views v ON v.story_id = s.id
+        WHERE s.status = 'approved'
+        GROUP BY s.id
+        ORDER BY s.created_at DESC
+    """)
     rows = cur.fetchall()
     cur.close(); conn.close()
-    return ok([{'id': r[0], 'title': r[1], 'author_name': r[2], 'genre': r[3], 'text': r[4], 'created_at': str(r[5])} for r in rows])
+    return ok([{'id': r[0], 'title': r[1], 'author_name': r[2], 'genre': r[3], 'text': r[4], 'created_at': str(r[5]), 'views': r[6]} for r in rows])
