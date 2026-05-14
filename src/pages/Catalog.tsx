@@ -38,7 +38,10 @@ export default function Catalog() {
         >
           ShadowTales
         </button>
-        <button className="flex items-center gap-2 text-[#8B0000] hover:text-red-400 transition-colors text-sm">
+        <button
+          onClick={() => navigate('/submit')}
+          className="flex items-center gap-2 text-[#8B0000] hover:text-red-400 transition-colors text-sm"
+        >
           <Icon name="PenLine" size={16} />
           Предложить историю
         </button>

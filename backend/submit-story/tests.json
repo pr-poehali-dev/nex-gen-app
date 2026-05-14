@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Пустые поля",
+      "method": "POST",
+      "path": "/",
+      "body": {"title": "", "author_name": "", "genre": "", "text": ""},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "Все поля обязательны"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Успешная отправка истории",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "title": "Тестовая история",
+        "author_name": "Тест Автор",
+        "genre": "Хоррор",
+        "text": "Это тестовая история длиной более ста символов. Она нужна только для проверки работоспособности эндпоинта и будет удалена после тестирования."
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
