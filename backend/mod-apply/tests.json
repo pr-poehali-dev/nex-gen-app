@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Пустые поля — ошибка",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "", "contact": "", "reason": ""},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Успешная заявка",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Тест Тестов", "contact": "@test_tg", "reason": "Хочу помогать проекту и модерировать истории, слежу за качеством контента."},
+      "expectedStatus": 200
+    }
+  ]
+}
