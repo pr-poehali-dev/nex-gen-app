@@ -44,11 +44,11 @@ export default function Register() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-sm px-8 relative"
+        className="w-full max-w-sm px-6 relative"
       >
         <button
           onClick={() => navigate('/')}
-          className="text-white/25 hover:text-white transition-colors tracking-widest text-xs uppercase mb-12 flex items-center gap-2"
+          className="text-white/25 hover:text-white transition-colors tracking-widest text-sm uppercase mb-12 flex items-center gap-2"
         >
           <Icon name="ArrowLeft" size={12} /> ShadowTales
         </button>

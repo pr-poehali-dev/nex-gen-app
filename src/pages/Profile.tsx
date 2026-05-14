@@ -74,11 +74,11 @@ export default function Profile() {
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.15) 0%, transparent 60%)' }} />
       <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.2), transparent)' }} />
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-12 py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm">
-          <Icon name="ArrowLeft" size={16} /> Назад
+          <Icon name="ArrowLeft" size={16} /> <span className="hidden sm:inline">Назад</span>
         </button>
-        <button onClick={() => navigate('/')} className="text-white text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+        <button onClick={() => navigate('/')} className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
           ShadowTales
         </button>
         <div className="w-20" />
@@ -88,8 +88,8 @@ export default function Profile() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
 
           {/* Шапка профиля */}
-          <div className="flex items-start gap-5 mb-10 pb-10 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="w-16 h-16 rounded-sm flex-shrink-0 overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+          <div className="flex flex-col sm:flex-row items-start gap-5 mb-10 pb-10 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-sm flex-shrink-0 overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
@@ -104,7 +104,7 @@ export default function Profile() {
                 name_prefix={profile.name_prefix}
                 name_color={profile.name_color}
                 name_effect={profile.name_effect}
-                className="text-2xl mb-1.5 block"
+                className="text-xl md:text-2xl mb-1.5 block"
                 style={{ fontFamily: "'Cinzel Decorative', serif" } as React.CSSProperties}
               />
               <div className="flex items-center gap-2 flex-wrap">
@@ -124,12 +124,12 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-3 mb-10">
             <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Прочитано</p>
-              <p className="text-white text-2xl font-light">{profile.stories_read}</p>
+              <p className="text-white text-xl md:text-2xl font-light">{profile.stories_read}</p>
               <p className="text-white/20 text-xs mt-0.5">историй</p>
             </div>
             <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Комментарии</p>
-              <p className="text-white text-2xl font-light">{profile.comments_count}</p>
+              <p className="text-white text-xl md:text-2xl font-light">{profile.comments_count}</p>
               <p className="text-white/20 text-xs mt-0.5">оставлено</p>
             </div>
           </div>

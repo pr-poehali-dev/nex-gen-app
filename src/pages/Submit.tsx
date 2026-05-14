@@ -56,7 +56,7 @@ export default function Submit() {
 
       {/* Шапка */}
       <header
-        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-12 py-4 border-b border-white/5"
+        className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5"
         style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}
       >
         <button
@@ -64,11 +64,11 @@ export default function Submit() {
           className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
         >
           <Icon name="ArrowLeft" size={16} />
-          Каталог
+          <span className="hidden sm:inline">Каталог</span>
         </button>
         <button
           onClick={() => navigate('/')}
-          className="text-white text-lg font-bold tracking-wider hover:text-red-400 transition-colors duration-200"
+          className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors duration-200"
           style={{ fontFamily: "'Cinzel Decorative', serif" }}
         >
           ShadowTales
@@ -76,14 +76,14 @@ export default function Submit() {
         <div className="w-24" />
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 md:px-8 py-14">
+      <main className="max-w-2xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <h1
-            className="text-3xl md:text-4xl text-white mb-3"
+            className="text-2xl md:text-4xl text-white mb-3"
             style={{ fontFamily: "'Cinzel Decorative', serif" }}
           >
             Предложить историю
@@ -170,7 +170,7 @@ export default function Submit() {
                 </label>
                 <textarea
                   className={inputClass}
-                  rows={12}
+                  rows={8}
                   placeholder="Начни свою историю здесь..."
                   value={form.text}
                   onChange={e => set('text', e.target.value)}

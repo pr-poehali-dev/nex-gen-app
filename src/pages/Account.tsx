@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { fetchMe, logout, getSessionId, AUTH_URL, User } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
-import { NAME_COLORS, NAME_EFFECTS, getLevelByReads } from '@/lib/levels'
+import { getLevelByReads } from '@/lib/levels'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -40,9 +40,7 @@ export default function Account() {
   const [favGenre, setFavGenre] = useState('')
   const [saving, setSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
-  const [nameColor, setNameColor] = useState('')
-  const [nameEffect, setNameEffect] = useState('')
-  const [nameSaving, setNameSaving] = useState(false)
+
 
   useEffect(() => {
     fetchMe().then(u => {
@@ -54,8 +52,6 @@ export default function Account() {
           setUser(parsed)
           setBio(parsed.bio || '')
           setFavGenre(parsed.favorite_genre || '')
-          setNameColor(parsed.name_color || '')
-          setNameEffect(parsed.name_effect || '')
           setLoading(false)
         })
     })
@@ -63,16 +59,6 @@ export default function Account() {
 
   const handleLogout = async () => { await logout(); navigate('/') }
 
-  const saveNameStyle = async () => {
-    setNameSaving(true)
-    await fetch(`${AUTH_URL}?action=update_profile`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid },
-      body: JSON.stringify({ bio, favorite_genre: favGenre, name_color: nameColor, name_effect: nameEffect }),
-    })
-    setUser(prev => prev ? { ...prev, name_color: nameColor, name_effect: nameEffect } : prev)
-    setNameSaving(false)
-  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -122,11 +108,11 @@ export default function Account() {
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.15) 0%, transparent 60%)' }} />
       <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.2), transparent)' }} />
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-12 py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
         <button onClick={() => navigate('/catalog')} className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm">
           <Icon name="ArrowLeft" size={16} /> Каталог
         </button>
-        <button onClick={() => navigate('/')} className="text-white text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+        <button onClick={() => navigate('/')} className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
           ShadowTales
         </button>
         <button onClick={() => navigate(`/u/${user.username}`)} className="text-white/25 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
@@ -138,9 +124,9 @@ export default function Account() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
 
           {/* Шапка */}
-          <div className="flex items-start gap-5 mb-8 pb-8 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-col sm:flex-row items-start gap-5 mb-8 pb-8 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {/* Аватар с загрузкой */}
-            <label className="relative w-14 h-14 rounded-sm flex-shrink-0 cursor-pointer group overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+            <label className="relative w-12 h-12 md:w-14 md:h-14 rounded-sm flex-shrink-0 cursor-pointer group overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
               {user.avatar_url
                 ? <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
@@ -157,7 +143,7 @@ export default function Account() {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
             </label>
             <div>
-              <h1 className="text-2xl text-white" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{user.username}</h1>
+              <h1 className="text-xl md:text-2xl text-white" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{user.username}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>
                 <span className="text-white/20 text-xs">с {joinDate(user.created_at)}</span>
@@ -168,14 +154,14 @@ export default function Account() {
 
           {/* Статистика */}
           <div className="grid grid-cols-2 gap-3 mb-8">
-            <div className="border rounded-sm px-4 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+            <div className="border rounded-sm px-3 py-3 md:px-4 md:py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <p className="text-white/25 text-xs uppercase tracking-wider mb-2">Прочитано</p>
-              <p className="text-white text-3xl font-light">{user.stories_read ?? 0}</p>
+              <p className="text-white text-2xl md:text-3xl font-light">{user.stories_read ?? 0}</p>
               <p className="text-white/20 text-xs mt-1">историй</p>
             </div>
-            <div className="border rounded-sm px-4 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+            <div className="border rounded-sm px-3 py-3 md:px-4 md:py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <p className="text-white/25 text-xs uppercase tracking-wider mb-2">Комментарии</p>
-              <p className="text-white text-3xl font-light">{user.comments_count ?? 0}</p>
+              <p className="text-white text-2xl md:text-3xl font-light">{user.comments_count ?? 0}</p>
               <p className="text-white/20 text-xs mt-1">оставлено</p>
             </div>
           </div>
@@ -235,48 +221,6 @@ export default function Account() {
             </div>
           )}
 
-          {/* Кастомизация ника для стаффа */}
-          {(user.role === 'admin' || user.role === 'moderator') && (
-            <div className="border rounded-sm p-5 mb-6 space-y-5" style={{ borderColor: 'rgba(139,0,0,0.2)', backgroundColor: 'rgba(139,0,0,0.04)' }}>
-              <div>
-                <p className="text-white/50 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Icon name="Sparkles" size={12} className="text-[#8B0000]" /> Кастомизация ника
-                </p>
-                {/* Предпросмотр */}
-                <div className="mb-4 px-3 py-2 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-                  <p className="text-white/20 text-xs mb-1">Предпросмотр:</p>
-                  <UserName username={user.username} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
-                </div>
-              </div>
-              {/* Цвет */}
-              <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Цвет ника</label>
-                <div className="flex flex-wrap gap-2">
-                  {NAME_COLORS.map(c => (
-                    <button key={c.value} onClick={() => setNameColor(c.value)} title={c.label}
-                      className="w-7 h-7 rounded-sm border-2 transition-all"
-                      style={{ backgroundColor: c.value, borderColor: nameColor === c.value ? '#fff' : 'transparent', transform: nameColor === c.value ? 'scale(1.2)' : 'scale(1)' }} />
-                  ))}
-                </div>
-              </div>
-              {/* Эффект */}
-              <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Эффект</label>
-                <div className="flex flex-wrap gap-2">
-                  {NAME_EFFECTS.map(e => (
-                    <button key={e.value} onClick={() => setNameEffect(e.value)}
-                      className="px-3 py-1.5 text-xs border rounded-sm transition-all"
-                      style={{ backgroundColor: nameEffect === e.value ? '#8B0000' : 'transparent', borderColor: nameEffect === e.value ? '#8B0000' : 'rgba(255,255,255,0.1)', color: nameEffect === e.value ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-                      {e.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={saveNameStyle} disabled={nameSaving} className="flex items-center gap-2 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: '#8B0000', backgroundColor: '#8B0000', color: '#fff' }}>
-                {nameSaving ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Сохранить стиль
-              </button>
-            </div>
-          )}
 
           {/* Действия */}
           <div className="space-y-2">

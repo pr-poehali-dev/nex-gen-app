@@ -56,54 +56,42 @@ export default function Catalog() {
       />
 
       <header
-        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-12 py-4 border-b border-white/5"
+        className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5"
         style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}
       >
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
-        >
+        <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm">
           <Icon name="ArrowLeft" size={16} />
-          Назад
+          <span className="hidden sm:inline">Назад</span>
         </button>
         <button
           onClick={() => navigate('/')}
-          className="text-white text-lg font-bold tracking-wider hover:text-red-400 transition-colors duration-200"
+          className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors duration-200"
           style={{ fontFamily: "'Cinzel Decorative', serif" }}
         >
           ShadowTales
         </button>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {currentUser ? (
-            <button
-              onClick={() => navigate('/account')}
-              className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm"
-            >
+            <button onClick={() => navigate('/account')} className="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-sm">
               <Icon name="CircleUser" size={16} />
-              {currentUser.username}
+              <span className="hidden sm:inline max-w-[80px] truncate">{currentUser.username}</span>
             </button>
           ) : (
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
-            >
+            <button onClick={() => navigate('/login')} className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm">
               <Icon name="LogIn" size={15} />
-              Войти
+              <span className="hidden sm:inline">Войти</span>
             </button>
           )}
-          <button
-            onClick={() => navigate('/submit')}
-            className="flex items-center gap-2 text-[#8B0000] hover:text-red-400 transition-colors text-sm"
-          >
+          <button onClick={() => navigate('/submit')} className="flex items-center gap-1.5 text-[#8B0000] hover:text-red-400 transition-colors text-sm">
             <Icon name="PenLine" size={16} />
-            Предложить историю
+            <span className="hidden sm:inline">Предложить</span>
           </button>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 md:px-12 py-12">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-10">
-          <h1 className="text-3xl md:text-5xl text-white mb-3" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+      <main className="max-w-3xl mx-auto px-4 md:px-12 py-8 md:py-12">
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-8 md:mb-10">
+          <h1 className="text-2xl md:text-5xl text-white mb-2" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
             Каталог историй
           </h1>
           <p className="text-white/40 text-sm">
@@ -111,12 +99,12 @@ export default function Catalog() {
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }} className="flex flex-wrap gap-2 mb-10">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }} className="flex flex-wrap gap-2 mb-8 md:mb-10">
           {GENRES.map(genre => (
             <button
               key={genre}
               onClick={() => setActiveGenre(genre)}
-              className="px-4 py-1.5 text-sm transition-all duration-200 border rounded-sm"
+              className="px-3 py-1 md:px-4 md:py-1.5 text-xs md:text-sm transition-all duration-200 border rounded-sm"
               style={{
                 backgroundColor: activeGenre === genre ? '#8B0000' : 'transparent',
                 borderColor: activeGenre === genre ? '#8B0000' : 'rgba(255,255,255,0.1)',
@@ -149,7 +137,7 @@ export default function Catalog() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.07 }}
               onClick={() => navigate(`/story/${story.id}`)}
-              className="group py-7 border-b cursor-pointer"
+              className="group py-5 md:py-7 border-b cursor-pointer"
               style={{ borderColor: 'rgba(255,255,255,0.06)' }}
             >
               <div className="flex items-start justify-between gap-6">
@@ -161,7 +149,7 @@ export default function Catalog() {
                     <span className="text-white/25 text-xs">{formatDate(story.created_at)}</span>
                   </div>
                   <h2
-                    className="text-white text-xl md:text-2xl mb-2 group-hover:text-red-400 transition-colors duration-200"
+                    className="text-white text-base md:text-2xl mb-2 group-hover:text-red-400 transition-colors duration-200"
                     style={{ fontFamily: "'Cinzel Decorative', serif" }}
                   >
                     {story.title}
