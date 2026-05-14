@@ -159,12 +159,12 @@ export default function Story() {
               const badge = ROLE_BADGE[c.role]
               return (
                 <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4">
-                  <div className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold" style={{ backgroundColor: `${badge?.color || '#333'}22`, color: badge?.color || '#666', fontFamily: "'Cinzel Decorative', serif" }}>
+                  <button onClick={() => navigate(`/u/${c.username}`)} className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold hover:opacity-70 transition-opacity" style={{ backgroundColor: `${badge?.color || '#333'}22`, color: badge?.color || '#666', fontFamily: "'Cinzel Decorative', serif" }}>
                     {c.username[0].toUpperCase()}
-                  </div>
+                  </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white/70 text-sm">{c.username}</span>
+                      <button onClick={() => navigate(`/u/${c.username}`)} className="text-white/70 hover:text-white transition-colors text-sm">{c.username}</button>
                       {badge && <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>}
                       <span className="text-white/20 text-xs">{formatTime(c.created_at)}</span>
                     </div>
