@@ -207,6 +207,30 @@ export default function Submit() {
               </button>
             </form>
           )}
+
+          {/* Баннер набора в модераторы */}
+          {status !== 'success' && (
+            <div
+              className="mt-10 border rounded-sm px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              style={{ borderColor: 'rgba(139,0,0,0.3)', backgroundColor: 'rgba(139,0,0,0.06)' }}
+            >
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon name="Shield" size={13} className="text-[#8B0000]" />
+                  <span className="text-xs uppercase tracking-widest text-[#8B0000]">Открытый набор</span>
+                </div>
+                <p className="text-white text-sm" style={{ fontFamily: "'Cinzel Decorative', serif" }}>Ищем модераторов</p>
+                <p className="text-white/40 text-xs mt-1">Хочешь решать, какие истории попадают на сайт?</p>
+              </div>
+              <button
+                onClick={() => navigate('/join')}
+                className="flex-shrink-0 px-4 py-2 text-xs border rounded-sm transition-all duration-200 tracking-wider uppercase hover:bg-[#8B0000] hover:text-white"
+                style={{ borderColor: '#8B0000', color: '#8B0000', backgroundColor: 'transparent' }}
+              >
+                Подать заявку
+              </button>
+            </div>
+          )}
         </motion.div>
       </main>
     </div>

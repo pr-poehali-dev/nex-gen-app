@@ -163,32 +163,7 @@ export default function Catalog() {
           ))}
         </div>
 
-        {/* Баннер набора в модераторы */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-16 border rounded-sm px-6 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
-          style={{ borderColor: 'rgba(139,0,0,0.3)', backgroundColor: 'rgba(139,0,0,0.06)' }}
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Icon name="Shield" size={14} className="text-[#8B0000]" />
-              <span className="text-xs uppercase tracking-widest text-[#8B0000]">Открытый набор</span>
-            </div>
-            <p className="text-white text-base" style={{ fontFamily: "'Cinzel Decorative', serif" }}>Ищем модераторов</p>
-            <p className="text-white/40 text-sm mt-1">Помогай отбирать лучшие истории и держи атмосферу сайта.</p>
-          </div>
-          <button
-            onClick={() => navigate('/join')}
-            className="flex-shrink-0 px-5 py-2.5 text-sm border rounded-sm transition-all duration-200 tracking-wider uppercase"
-            style={{ borderColor: '#8B0000', color: '#8B0000', backgroundColor: 'transparent' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#8B0000'; (e.currentTarget as HTMLButtonElement).style.color = '#fff' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#8B0000' }}
-          >
-            Подать заявку
-          </button>
-        </motion.div>
+
       </main>
     </div>
   )
