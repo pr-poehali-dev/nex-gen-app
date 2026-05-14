@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "me без сессии — 401",
+      "method": "GET",
+      "path": "/?action=me",
+      "expectedStatus": 401
+    },
+    {
+      "name": "Регистрация — пустые поля",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {"username": "", "email": "", "password": ""},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Регистрация — успех",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {"username": "testuser99", "email": "test99@shadow.com", "password": "secret123"},
+      "expectedStatus": 200
+    },
+    {
+      "name": "Логин до одобрения — ошибка",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {"login": "testuser99", "password": "secret123"},
+      "expectedStatus": 400
+    }
+  ]
+}
