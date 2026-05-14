@@ -14,7 +14,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Account from "./pages/Account";
 import Profile from "./pages/Profile";
-import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,8 +35,6 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<Account />} />
           <Route path="/u/:username" element={<Profile />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/messages/:userId" element={<Messages />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -15,8 +15,17 @@
   .animate-name-flicker {
     animation: nameFlicker 3s linear infinite;
   }
+  .animate-name-shake {
+    animation: nameShake 0.15s linear infinite;
+  }
   .animate-name-rainbow {
     animation: nameRainbow 4s linear infinite;
+  }
+  .animate-name-ghost {
+    animation: nameGhost 3s ease-in-out infinite;
+  }
+  .animate-name-blood {
+    animation: nameBlood 2s ease-in-out infinite;
   }
   .horror-glow {
     text-shadow:
@@ -80,6 +89,47 @@
   }
   100% {
     color: #ff0000;
+  }
+}
+
+@keyframes nameShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes nameGhost {
+  0%,
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  40% {
+    opacity: 0.3;
+    filter: blur(1.5px);
+  }
+  60% {
+    opacity: 0.7;
+    filter: blur(0.5px);
+  }
+}
+
+@keyframes nameBlood {
+  0%,
+  100% {
+    text-shadow: 0 0 6px rgba(180, 0, 0, 0.8);
+  }
+  50% {
+    text-shadow:
+      0 4px 12px rgba(180, 0, 0, 0.9),
+      0 0 30px rgba(180, 0, 0, 0.4);
   }
 }
 

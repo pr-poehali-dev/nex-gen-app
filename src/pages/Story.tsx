@@ -175,7 +175,6 @@ export default function Story() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <UserName
                         username={c.username}
-                        role={c.role}
                         name_prefix={c.name_prefix}
                         name_color={c.name_color}
                         name_effect={c.name_effect}

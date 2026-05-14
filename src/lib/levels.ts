@@ -1,47 +1,51 @@
 export interface LevelInfo {
   level: number
   title: string
-  prefix: string
   color: string
   minReads: number
 }
 
 export const LEVELS: LevelInfo[] = [
-  { level: 1, title: 'Новичок',           prefix: '',   color: '#666666', minReads: 0  },
-  { level: 2, title: 'Наблюдатель',       prefix: '👁', color: '#aaaaaa', minReads: 5  },
-  { level: 3, title: 'Странник',          prefix: '🕯', color: '#cc6644', minReads: 15 },
-  { level: 4, title: 'Хранитель',         prefix: '💀', color: '#cc2222', minReads: 30 },
-  { level: 5, title: 'Одержимый',         prefix: '🩸', color: '#ff0000', minReads: 60 },
-  { level: 6, title: 'Голос из темноты',  prefix: '👁‍🗨', color: '#ff0000', minReads: 100 },
+  { level: 1, title: 'Новичок',          color: '#555555', minReads: 0   },
+  { level: 2, title: 'Наблюдатель',      color: '#888888', minReads: 5   },
+  { level: 3, title: 'Странник',         color: '#cc6644', minReads: 15  },
+  { level: 4, title: 'Хранитель',        color: '#cc2222', minReads: 30  },
+  { level: 5, title: 'Одержимый',        color: '#ff2222', minReads: 60  },
+  { level: 6, title: 'Голос из темноты', color: '#ff0000', minReads: 100 },
 ]
 
-export const STAFF_COLORS = [
-  { value: '#cc0000', label: 'Кровавый' },
-  { value: '#ff3333', label: 'Алый' },
-  { value: '#ff6600', label: 'Огненный' },
-  { value: '#cc6600', label: 'Янтарный' },
-  { value: '#9900cc', label: 'Мрачный фиолет' },
-  { value: '#0066cc', label: 'Ледяной' },
-  { value: '#00cc66', label: 'Ядовитый' },
-  { value: '#cccc00', label: 'Золотой' },
-  { value: '#ff66cc', label: 'Сумеречный' },
-  { value: '#aaaaaa', label: 'Серебро' },
-  { value: '#ffffff', label: 'Белый' },
+// Цвета для выдачи через админку
+export const NAME_COLORS = [
+  { value: '#cc0000', label: 'Кровавый'      },
+  { value: '#ff3333', label: 'Алый'          },
+  { value: '#ff6600', label: 'Огненный'      },
+  { value: '#cc6600', label: 'Янтарный'      },
+  { value: '#9900cc', label: 'Тёмный фиолет' },
+  { value: '#6600ff', label: 'Потусторонний' },
+  { value: '#0066cc', label: 'Ледяной'       },
+  { value: '#00cc66', label: 'Ядовитый'      },
+  { value: '#cccc00', label: 'Золотой'       },
+  { value: '#ff66cc', label: 'Сумеречный'    },
+  { value: '#aaaaaa', label: 'Серебро'       },
+  { value: '#ffffff', label: 'Белый'         },
+  { value: '',        label: 'Авто (уровень)'},
 ]
 
-export const STAFF_EFFECTS = [
-  { value: 'none',         label: 'Без эффекта' },
-  { value: 'glow-red',     label: 'Красное свечение' },
-  { value: 'glow-orange',  label: 'Оранжевое свечение' },
-  { value: 'glow-purple',  label: 'Фиолетовое свечение' },
-  { value: 'glow-gold',    label: 'Золотое свечение' },
-  { value: 'pulse',        label: 'Пульсация' },
-  { value: 'flicker',      label: 'Мерцание' },
-  { value: 'rainbow',      label: 'Радужный' },
-]
-
-export const STAFF_PREFIXES = [
-  '','👁','🕯','💀','🩸','👁‍🗨','⛧','🔮','🕸','🦇','👻','🌑','⚰️','🗡','🔥','❄️',
+// Эффекты для выдачи через админку
+export const NAME_EFFECTS = [
+  { value: '',              label: 'Без эффекта'         },
+  { value: 'glow-red',      label: '🔴 Красное свечение' },
+  { value: 'glow-orange',   label: '🟠 Оранжевое свечение'},
+  { value: 'glow-purple',   label: '🟣 Фиолетовое свечение'},
+  { value: 'glow-blue',     label: '🔵 Синее свечение'   },
+  { value: 'glow-gold',     label: '🟡 Золотое свечение' },
+  { value: 'glow-green',    label: '🟢 Ядовитое свечение'},
+  { value: 'pulse',         label: '💓 Пульсация'        },
+  { value: 'flicker',       label: '👁 Мерцание'         },
+  { value: 'shake',         label: '😨 Дрожание'         },
+  { value: 'rainbow',       label: '🌈 Радужный'         },
+  { value: 'ghost',         label: '👻 Призрачный'       },
+  { value: 'blood-drip',    label: '🩸 Кровоточащий'     },
 ]
 
 export function getLevelByReads(reads: number): LevelInfo {
@@ -53,39 +57,36 @@ export function getLevelByReads(reads: number): LevelInfo {
 }
 
 export function getNameStyle(opts: {
-  role: string
   stories_read?: number
   name_color?: string
   name_effect?: string
 }): React.CSSProperties {
-  const { role, stories_read = 0, name_color, name_effect } = opts
-  const isStaff = role === 'admin' || role === 'moderator'
+  const { stories_read = 0, name_color, name_effect } = opts
 
-  const color = isStaff && name_color ? name_color : getLevelByReads(stories_read).color
+  const color = name_color || getLevelByReads(stories_read).color
 
   const shadows: Record<string, string> = {
-    'glow-red':    '0 0 8px rgba(220,0,0,0.9), 0 0 20px rgba(220,0,0,0.5)',
-    'glow-orange': '0 0 8px rgba(255,120,0,0.9), 0 0 20px rgba(255,120,0,0.5)',
-    'glow-purple': '0 0 8px rgba(160,0,220,0.9), 0 0 20px rgba(160,0,220,0.5)',
-    'glow-gold':   '0 0 8px rgba(220,180,0,0.9), 0 0 20px rgba(220,180,0,0.5)',
+    'glow-red':    '0 0 8px rgba(220,0,0,0.9),   0 0 22px rgba(220,0,0,0.5)',
+    'glow-orange': '0 0 8px rgba(255,120,0,0.9),  0 0 22px rgba(255,120,0,0.5)',
+    'glow-purple': '0 0 8px rgba(160,0,220,0.9),  0 0 22px rgba(160,0,220,0.5)',
+    'glow-blue':   '0 0 8px rgba(0,100,220,0.9),  0 0 22px rgba(0,100,220,0.5)',
+    'glow-gold':   '0 0 8px rgba(220,180,0,0.9),  0 0 22px rgba(220,180,0,0.5)',
+    'glow-green':  '0 0 8px rgba(0,200,80,0.9),   0 0 22px rgba(0,200,80,0.5)',
   }
 
-  const textShadow = (isStaff && name_effect && shadows[name_effect]) ? shadows[name_effect] : undefined
+  const textShadow = name_effect ? shadows[name_effect] : undefined
 
   return { color, textShadow }
 }
 
-export function getNameClassName(opts: {
-  role: string
-  name_effect?: string
-}): string {
-  const { role, name_effect } = opts
-  const isStaff = role === 'admin' || role === 'moderator'
-  if (!isStaff || !name_effect) return ''
+export function getNameClassName(name_effect?: string): string {
   const map: Record<string, string> = {
-    pulse:   'animate-name-pulse',
-    flicker: 'animate-name-flicker',
-    rainbow: 'animate-name-rainbow',
+    pulse:       'animate-name-pulse',
+    flicker:     'animate-name-flicker',
+    shake:       'animate-name-shake',
+    rainbow:     'animate-name-rainbow',
+    ghost:       'animate-name-ghost',
+    'blood-drip':'animate-name-blood',
   }
-  return map[name_effect] || ''
+  return name_effect ? (map[name_effect] || '') : ''
 }

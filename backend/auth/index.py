@@ -182,10 +182,10 @@ def handler(event: dict, context) -> dict:
         if not is_admin_key and (not user or user['role'] != 'admin'):
             cur.close(); conn.close()
             return err('Нет доступа', 403)
-        cur.execute(f"SELECT id, username, email, role, status, created_at FROM {SCHEMA}.users ORDER BY created_at DESC")
+        cur.execute(f"SELECT id, username, email, role, status, created_at, name_color, name_effect FROM {SCHEMA}.users ORDER BY created_at DESC")
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return ok([{'id': r[0], 'username': r[1], 'email': r[2], 'role': r[3], 'status': r[4], 'created_at': r[5]} for r in rows])
+        return ok([{'id': r[0], 'username': r[1], 'email': r[2], 'role': r[3], 'status': r[4], 'created_at': r[5], 'name_color': r[6] or '', 'name_effect': r[7] or ''} for r in rows])
 
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
@@ -367,12 +367,26 @@ def handler(event: dict, context) -> dict:
                 return err('Укажи id пользователя')
             new_status = body.get('status')
             new_role = body.get('role')
+            new_color = body.get('name_color')  # None = не менять, '' = сбросить
+            new_effect = body.get('name_effect')
+
+            ALLOWED_COLORS = ['#cc0000','#ff3333','#ff6600','#cc6600','#9900cc','#6600ff','#0066cc','#00cc66','#cccc00','#ff66cc','#aaaaaa','#ffffff','']
+            ALLOWED_EFFECTS = ['','glow-red','glow-orange','glow-purple','glow-blue','glow-gold','glow-green','pulse','flicker','shake','rainbow','ghost','blood-drip']
+
             if new_status and new_status in ('active', 'pending', 'rejected'):
                 cur.execute(f"UPDATE {SCHEMA}.users SET status = %s WHERE id = %s", (new_status, target_id))
             if new_role and new_role in ('user', 'moderator', 'admin'):
                 cur.execute(f"UPDATE {SCHEMA}.users SET role = %s WHERE id = %s", (new_role, target_id))
-            conn.commit(); cur.close(); conn.close()
-            return ok({'success': True})
+            if new_color is not None and new_color in ALLOWED_COLORS:
+                cur.execute(f"UPDATE {SCHEMA}.users SET name_color = %s WHERE id = %s", (new_color, target_id))
+            if new_effect is not None and new_effect in ALLOWED_EFFECTS:
+                cur.execute(f"UPDATE {SCHEMA}.users SET name_effect = %s WHERE id = %s", (new_effect, target_id))
+            conn.commit()
+            # Возвращаем обновлённые данные пользователя
+            cur.execute(f"SELECT name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (target_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            return ok({'success': True, 'name_color': row[0] or '' if row else '', 'name_effect': row[1] or '' if row else ''})
 
     cur.close(); conn.close()
     return err('Неверный запрос', 400)

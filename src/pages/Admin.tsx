@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { AUTH_URL, getSessionId, getCachedUser, fetchMe, logout, User } from '@/lib/auth'
+import UserName from '@/components/ui/UserName'
+import { NAME_COLORS, NAME_EFFECTS } from '@/lib/levels'
 
 const STORIES_API = 'https://functions.poehali.dev/1dfd0899-ad39-4aec-835b-43bb3396248d'
 const MOD_API = 'https://functions.poehali.dev/3c308c13-780b-4cbd-82f9-2544dd692ce9'
@@ -68,6 +70,7 @@ interface ModApp {
 interface AppUser {
   id: number; username: string; email: string
   role: 'user' | 'moderator' | 'admin'; status: string; created_at: string
+  name_color?: string; name_effect?: string
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -157,10 +160,12 @@ export default function Admin() {
     setModActionLoading(null)
   }
 
-  const updateUser = async (id: number, patch: { status?: string; role?: string }) => {
+  const updateUser = async (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string }) => {
     setUserActionLoading(id)
-    await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, ...patch }) })
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch } : u))
+    const res = await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, ...patch }) })
+    const data = await res.json()
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch, ...(parsed.name_color !== undefined ? { name_color: parsed.name_color } : {}), ...(parsed.name_effect !== undefined ? { name_effect: parsed.name_effect } : {}) } : u))
     setUserActionLoading(null)
   }
 
@@ -372,40 +377,88 @@ export default function Admin() {
             <div className="flex flex-col gap-2">
               {filteredUsers.map(u => {
                 const st = STATUS_LABEL[u.status] || STATUS_LABEL.pending
+                const isOpen = expandedStory === u.id
                 return (
-                  <motion.div key={u.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="border rounded-sm px-5 py-4 flex items-center justify-between gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-white text-sm">{u.username}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${st.color}22`, color: st.color }}>{st.label}</span>
-                        <span className="text-xs text-white/30">{ROLE_LABEL[u.role]}</span>
+                  <motion.div key={u.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="border rounded-sm overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <button className="w-full text-left px-5 py-4 flex items-center justify-between gap-4" onClick={() => setExpandedStory(isOpen ? null : u.id)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <UserName username={u.username} name_color={(u as AppUser & {name_color?: string}).name_color} name_effect={(u as AppUser & {name_effect?: string}).name_effect} className="text-sm" />
+                          <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${st.color}22`, color: st.color }}>{st.label}</span>
+                          <span className="text-xs text-white/30">{ROLE_LABEL[u.role]}</span>
+                        </div>
+                        <p className="text-white/25 text-xs">{u.email}</p>
                       </div>
-                      <p className="text-white/30 text-xs">{u.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {u.status === 'pending' && (
-                        <button onClick={() => updateUser(u.id, { status: 'active' })} disabled={userActionLoading === u.id} className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
-                          {userActionLoading === u.id ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Одобрить
-                        </button>
+                      <div className="flex items-center gap-2">
+                        {u.status === 'pending' && (
+                          <>
+                            <button onClick={e => { e.stopPropagation(); updateUser(u.id, { status: 'active' }) }} disabled={userActionLoading === u.id} className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
+                              {userActionLoading === u.id ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Одобрить
+                            </button>
+                            <button onClick={e => { e.stopPropagation(); updateUser(u.id, { status: 'rejected' }) }} disabled={userActionLoading === u.id} className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
+                              <Icon name="X" size={12} /> Отклонить
+                            </button>
+                          </>
+                        )}
+                        <Icon name={isOpen ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-white/20 flex-shrink-0" />
+                      </div>
+                    </button>
+
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
+                          <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                            {/* Роль */}
+                            {u.status === 'active' && (
+                              <div>
+                                <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Роль</label>
+                                <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })}
+                                  className="text-xs px-3 py-2 rounded-sm border outline-none"
+                                  style={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+                                  <option value="user">Пользователь</option>
+                                  <option value="moderator">Модератор</option>
+                                  <option value="admin">Администратор</option>
+                                </select>
+                              </div>
+                            )}
+
+                            {/* Цвет ника */}
+                            <div>
+                              <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Цвет ника</label>
+                              <div className="flex flex-wrap gap-2">
+                                {NAME_COLORS.map(c => (
+                                  <button key={c.value} title={c.label}
+                                    onClick={() => updateUser(u.id, { name_color: c.value })}
+                                    className="w-6 h-6 rounded-sm border-2 transition-all flex items-center justify-center"
+                                    style={{ backgroundColor: c.value || '#333', borderColor: (u as AppUser & {name_color?: string}).name_color === c.value ? '#fff' : 'transparent' }}>
+                                    {!c.value && <span className="text-white/40 text-xs">A</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Эффект ника */}
+                            <div>
+                              <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Эффект ника</label>
+                              <div className="flex flex-wrap gap-2">
+                                {NAME_EFFECTS.map(e => (
+                                  <button key={e.value}
+                                    onClick={() => updateUser(u.id, { name_effect: e.value })}
+                                    className="px-3 py-1 text-xs border rounded-sm transition-all"
+                                    style={{
+                                      backgroundColor: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#8B0000' : 'transparent',
+                                      borderColor: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#8B0000' : 'rgba(255,255,255,0.1)',
+                                      color: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#fff' : 'rgba(255,255,255,0.4)',
+                                    }}>
+                                    {e.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
-                      {u.status === 'active' && (
-                        <select
-                          value={u.role}
-                          onChange={e => updateUser(u.id, { role: e.target.value })}
-                          className="text-xs px-2 py-1.5 rounded-sm border outline-none"
-                          style={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
-                        >
-                          <option value="user">Пользователь</option>
-                          <option value="moderator">Модератор</option>
-                          <option value="admin">Администратор</option>
-                        </select>
-                      )}
-                      {u.status === 'pending' && (
-                        <button onClick={() => updateUser(u.id, { status: 'rejected' })} disabled={userActionLoading === u.id} className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
-                          <Icon name="X" size={12} /> Отклонить
-                        </button>
-                      )}
-                    </div>
+                    </AnimatePresence>
                   </motion.div>
                 )
               })}

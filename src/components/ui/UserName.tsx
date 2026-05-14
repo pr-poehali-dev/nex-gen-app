@@ -2,7 +2,6 @@ import { getNameStyle, getNameClassName } from '@/lib/levels'
 
 interface UserNameProps {
   username: string
-  role: string
   stories_read?: number
   name_color?: string
   name_effect?: string
@@ -12,15 +11,14 @@ interface UserNameProps {
 
 export default function UserName({
   username,
-  role,
   stories_read = 0,
   name_color,
   name_effect,
   className = '',
   onClick,
 }: UserNameProps) {
-  const style = getNameStyle({ role, stories_read, name_color, name_effect })
-  const animClass = getNameClassName({ role, name_effect })
+  const style = getNameStyle({ stories_read, name_color, name_effect })
+  const animClass = getNameClassName(name_effect)
   const Tag = onClick ? 'button' : 'span'
 
   return (

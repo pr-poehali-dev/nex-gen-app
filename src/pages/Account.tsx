@@ -231,7 +231,7 @@ export default function Account() {
             <div className="border rounded-sm px-5 py-4 mb-6 flex items-center gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <div className="flex-1">
                 <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
-                <UserName username={user.username} role={user.role} stories_read={user.stories_read} className="text-base" />
+                <UserName username={user.username} stories_read={user.stories_read} className="text-base" />
                 <p className="text-white/20 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function Account() {
                 {/* Предпросмотр */}
                 <div className="mb-4 px-3 py-2 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
                   <p className="text-white/20 text-xs mb-1">Предпросмотр:</p>
-                  <UserName username={user.username} role={user.role} name_prefix={namePrefix} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
+                  <UserName username={user.username} name_prefix={namePrefix} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
                 </div>
               </div>
               {/* Префикс */}
@@ -301,10 +301,6 @@ export default function Account() {
                 <Icon name="ChevronRight" size={15} className="text-white/20" />
               </button>
             )}
-            <button onClick={() => navigate('/messages')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-              <span className="flex items-center gap-3"><Icon name="MessageSquare" size={15} className="text-[#8B0000]" /> Личные сообщения</span>
-              <Icon name="ChevronRight" size={15} className="text-white/20" />
-            </button>
             <button onClick={() => navigate('/submit')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
               <span className="flex items-center gap-3"><Icon name="PenLine" size={15} className="text-[#8B0000]" /> Предложить историю</span>
               <Icon name="ChevronRight" size={15} className="text-white/20" />
