@@ -79,7 +79,7 @@ def handler(event: dict, context) -> dict:
         cur.close(); conn.close()
         return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5])} for r in rows])
 
-    # GET одна история
+    # GET одна история + трекинг просмотра
     story_id = params.get('id')
     if story_id:
         cur.execute(
@@ -87,9 +87,18 @@ def handler(event: dict, context) -> dict:
             (story_id,)
         )
         row = cur.fetchone()
-        cur.close(); conn.close()
         if not row:
+            cur.close(); conn.close()
             return err('Не найдено', 404)
+        # Записываем просмотр
+        user = get_user(cur, session_id)
+        user_id = user['id'] if user else None
+        cur.execute(
+            f"INSERT INTO {SCHEMA}.story_views (story_id, user_id) VALUES (%s, %s)",
+            (story_id, user_id)
+        )
+        conn.commit()
+        cur.close(); conn.close()
         return ok({'id': row[0], 'title': row[1], 'author_name': row[2], 'genre': row[3], 'text': row[4], 'created_at': str(row[5])})
 
     # GET список историй
