@@ -13,7 +13,7 @@ interface Story {
 
 interface Comment {
   id: number; user_id: number; username: string
-  role: string; text: string; created_at: string
+  role: string; text: string; created_at: string; avatar_url: string
 }
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -159,8 +159,13 @@ export default function Story() {
               const badge = ROLE_BADGE[c.role]
               return (
                 <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4">
-                  <button onClick={() => navigate(`/u/${c.username}`)} className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold hover:opacity-70 transition-opacity" style={{ backgroundColor: `${badge?.color || '#333'}22`, color: badge?.color || '#666', fontFamily: "'Cinzel Decorative', serif" }}>
-                    {c.username[0].toUpperCase()}
+                  <button onClick={() => navigate(`/u/${c.username}`)} className="w-7 h-7 rounded-sm flex-shrink-0 mt-0.5 overflow-hidden hover:opacity-70 transition-opacity" style={{ border: `1px solid ${badge?.color || '#333'}44` }}>
+                    {c.avatar_url
+                      ? <img src={c.avatar_url} alt={c.username} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: `${badge?.color || '#333'}22`, color: badge?.color || '#666', fontFamily: "'Cinzel Decorative', serif" }}>
+                          {c.username[0].toUpperCase()}
+                        </div>
+                    }
                   </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

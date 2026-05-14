@@ -60,24 +60,30 @@ def handler(event: dict, context) -> dict:
         if len(text) > 1000:
             cur.close(); conn.close()
             return err('Комментарий слишком длинный')
+        # Берём актуальный avatar_url пользователя
+        cur.execute(f"SELECT avatar_url FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
+        av = cur.fetchone()
+        avatar_url = av[0] if av and av[0] else ''
         cur.execute(
-            f"INSERT INTO {SCHEMA}.comments (story_id, user_id, username, role, text) VALUES (%s, %s, %s, %s, %s) RETURNING id, created_at",
-            (story_id, user['id'], user['username'], user['role'], text)
+            f"INSERT INTO {SCHEMA}.comments (story_id, user_id, username, role, text, avatar_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, created_at",
+            (story_id, user['id'], user['username'], user['role'], text, avatar_url)
         )
         row = cur.fetchone()
         conn.commit(); cur.close(); conn.close()
-        return ok({'id': row[0], 'user_id': user['id'], 'username': user['username'], 'role': user['role'], 'text': text, 'created_at': str(row[1])})
+        return ok({'id': row[0], 'user_id': user['id'], 'username': user['username'], 'role': user['role'], 'text': text, 'avatar_url': avatar_url, 'created_at': str(row[1])})
 
-    # GET комментарии
+    # GET комментарии — подтягиваем актуальный avatar_url из users
     if 'comments' in params:
         story_id = params['comments']
-        cur.execute(
-            f"SELECT id, user_id, username, role, text, created_at FROM {SCHEMA}.comments WHERE story_id = %s ORDER BY created_at ASC",
-            (story_id,)
-        )
+        cur.execute(f"""
+            SELECT c.id, c.user_id, c.username, c.role, c.text, c.created_at, u.avatar_url
+            FROM {SCHEMA}.comments c
+            LEFT JOIN {SCHEMA}.users u ON u.id = c.user_id
+            WHERE c.story_id = %s ORDER BY c.created_at ASC
+        """, (story_id,))
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5])} for r in rows])
+        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5]), 'avatar_url': r[6] or ''} for r in rows])
 
     # GET одна история + трекинг просмотра
     story_id = params.get('id')
