@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Icon from '@/components/ui/icon'
+import { getCachedUser } from '@/lib/auth'
 
 const GENRES = ['Все', 'Хоррор', 'Мистика', 'Психологический триллер', 'Крипипаста']
 const API_URL = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
@@ -33,6 +34,7 @@ export default function Catalog() {
   const [stories, setStories] = useState<Story[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const currentUser = getCachedUser()
 
   useEffect(() => {
     fetch(API_URL)
@@ -70,13 +72,32 @@ export default function Catalog() {
         >
           ShadowTales
         </button>
-        <button
-          onClick={() => navigate('/submit')}
-          className="flex items-center gap-2 text-[#8B0000] hover:text-red-400 transition-colors text-sm"
-        >
-          <Icon name="PenLine" size={16} />
-          Предложить историю
-        </button>
+        <div className="flex items-center gap-4">
+          {currentUser ? (
+            <button
+              onClick={() => navigate('/account')}
+              className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm"
+            >
+              <Icon name="CircleUser" size={16} />
+              {currentUser.username}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
+            >
+              <Icon name="LogIn" size={15} />
+              Войти
+            </button>
+          )}
+          <button
+            onClick={() => navigate('/submit')}
+            className="flex items-center gap-2 text-[#8B0000] hover:text-red-400 transition-colors text-sm"
+          >
+            <Icon name="PenLine" size={16} />
+            Предложить историю
+          </button>
+        </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 md:px-12 py-12">
