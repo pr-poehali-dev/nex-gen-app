@@ -7,6 +7,56 @@ import { AUTH_URL, getSessionId, getCachedUser, fetchMe, logout, User } from '@/
 const STORIES_API = 'https://functions.poehali.dev/1dfd0899-ad39-4aec-835b-43bb3396248d'
 const MOD_API = 'https://functions.poehali.dev/3c308c13-780b-4cbd-82f9-2544dd692ce9'
 
+// Резервный вход по секретному ключу (для первого запуска)
+function AdminKeyLogin({ onSuccess, navigate, inputClass, sid }: {
+  onSuccess: (role: string) => void
+  navigate: ReturnType<typeof useNavigate>
+  inputClass: string
+  sid: string
+}) {
+  const [key, setKey] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const res = await fetch(STORIES_API, { headers: { 'X-Admin-Key': key.trim() } })
+    if (res.status === 401) { setError('Неверный ключ'); setLoading(false); return }
+    // Ключ верный — сохраняем как виртуального admin-пользователя
+    localStorage.setItem('admin_key', key.trim())
+    window.location.reload()
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(60,0,0,0.2) 0%, transparent 60%)' }} />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm px-6 relative">
+        <button onClick={() => navigate('/')} className="text-white/30 hover:text-white transition-colors text-lg font-bold tracking-wider mb-10 block" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+          ShadowTales
+        </button>
+        <h1 className="text-2xl text-white mb-1" style={{ fontFamily: "'Cinzel Decorative', serif" }}>Панель администратора</h1>
+        <p className="text-white/30 text-sm mb-8">Войди через аккаунт или секретный ключ</p>
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+          <input type="password" className={inputClass} placeholder="Секретный ключ администратора..." value={key} onChange={e => setKey(e.target.value)} autoFocus />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button type="submit" disabled={loading} className="w-full py-3 text-sm tracking-widest uppercase border rounded-sm flex items-center justify-center gap-2" style={{ backgroundColor: '#8B0000', borderColor: '#8B0000', color: '#fff' }}>
+            {loading ? <><Icon name="Loader" size={15} className="animate-spin" />Проверяем...</> : <><Icon name="KeyRound" size={15} />Войти по ключу</>}
+          </button>
+        </form>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
+          <span className="text-white/20 text-xs">или</span>
+          <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
+        </div>
+        <button onClick={() => navigate('/login')} className="w-full py-3 text-sm tracking-widest uppercase border rounded-sm flex items-center justify-center gap-2 transition-all hover:border-white/20" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+          <Icon name="LogIn" size={15} /> Войти в аккаунт
+        </button>
+      </motion.div>
+    </div>
+  )
+}
+
 interface Submission {
   id: number; title: string; author_name: string; genre: string
   text: string; status: 'pending' | 'approved' | 'rejected' | 'deleted'; created_at: string
@@ -52,8 +102,16 @@ export default function Admin() {
   const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
 
   const sid = getSessionId()
+  const adminKey = localStorage.getItem('admin_key') || ''
 
   useEffect(() => {
+    // Если есть сохранённый admin_key — сразу входим как admin без сессии
+    if (adminKey) {
+      setUser({ id: 0, username: 'Администратор', email: '', role: 'admin', status: 'active' })
+      setAuthLoading(false)
+      loadAll('admin')
+      return
+    }
     fetchMe().then(u => {
       setUser(u)
       setAuthLoading(false)
@@ -61,15 +119,19 @@ export default function Admin() {
     })
   }, [])
 
+  const getHeaders = () => adminKey
+    ? { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }
+    : { 'X-Session-Id': sid, 'Content-Type': 'application/json' }
+
   const loadAll = async (role: string) => {
-    const headers = { 'X-Session-Id': sid }
-    const [sRes] = await Promise.all([fetch(STORIES_API, { headers })])
+    const h = adminKey ? { 'X-Admin-Key': adminKey } : { 'X-Session-Id': sid }
+    const sRes = await fetch(STORIES_API, { headers: h })
     const sData = await sRes.json()
     setStories(Array.isArray(sData) ? sData : [])
     if (role === 'admin') {
       const [mRes, uRes] = await Promise.all([
-        fetch(MOD_API, { headers }),
-        fetch(`${AUTH_URL}?action=users`, { headers }),
+        fetch(MOD_API, { headers: h }),
+        fetch(`${AUTH_URL}?action=users`, { headers: h }),
       ])
       const mData = await mRes.json(); const uData = await uRes.json()
       setModApps(Array.isArray(mData) ? mData : [])
@@ -79,7 +141,7 @@ export default function Admin() {
 
   const moderateStory = async (id: number, action: 'approve' | 'reject' | 'delete') => {
     setStoryActionLoading(id)
-    const res = await fetch(STORIES_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid }, body: JSON.stringify({ id, action }) })
+    const res = await fetch(STORIES_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action }) })
     if (res.ok) {
       if (action === 'delete') setStories(prev => prev.filter(s => s.id !== id))
       else { const ns = action === 'approve' ? 'approved' : 'rejected'; setStories(prev => prev.map(s => s.id === id ? { ...s, status: ns as Submission['status'] } : s)) }
@@ -90,19 +152,23 @@ export default function Admin() {
 
   const moderateMod = async (id: number, action: 'approve' | 'reject') => {
     setModActionLoading(id)
-    const res = await fetch(MOD_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid }, body: JSON.stringify({ id, action }) })
+    const res = await fetch(MOD_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action }) })
     if (res.ok) { const ns = action === 'approve' ? 'approved' : 'rejected'; setModApps(prev => prev.map(a => a.id === id ? { ...a, status: ns as ModApp['status'] } : a)); setExpandedMod(null) }
     setModActionLoading(null)
   }
 
   const updateUser = async (id: number, patch: { status?: string; role?: string }) => {
     setUserActionLoading(id)
-    await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid }, body: JSON.stringify({ id, ...patch }) })
+    await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, ...patch }) })
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch } : u))
     setUserActionLoading(null)
   }
 
-  const handleLogout = async () => { await logout(); navigate('/login') }
+  const handleLogout = async () => {
+    localStorage.removeItem('admin_key')
+    await logout()
+    navigate('/login')
+  }
 
   const inputClass = "w-full bg-transparent border border-white/10 rounded-sm px-4 py-3 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20"
 
@@ -113,17 +179,9 @@ export default function Admin() {
     </div>
   )
 
-  // Нет доступа
+  // Нет доступа — показываем форму входа по секретному ключу + ссылку на логин
   if (!user || (user.role !== 'admin' && user.role !== 'moderator')) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm px-6 text-center">
-        <h1 className="text-2xl text-white mb-3" style={{ fontFamily: "'Cinzel Decorative', serif" }}>Нет доступа</h1>
-        <p className="text-white/40 text-sm mb-6">Панель доступна только модераторам и администраторам.</p>
-        <button onClick={() => navigate('/login')} className="flex items-center gap-2 mx-auto text-[#8B0000] hover:text-red-400 transition-colors text-sm">
-          <Icon name="LogIn" size={14} /> Войти в аккаунт
-        </button>
-      </motion.div>
-    </div>
+    <AdminKeyLogin onSuccess={(role) => { loadAll(role); window.location.reload() }} navigate={navigate} inputClass={inputClass} sid={sid} />
   )
 
   const isAdmin = user.role === 'admin'
