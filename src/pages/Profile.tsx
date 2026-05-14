@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { AUTH_URL } from '@/lib/auth'
+import UserName from '@/components/ui/UserName'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -27,6 +28,9 @@ interface ProfileData {
   stories_read: number
   comments_count: number
   avatar_url: string
+  name_prefix: string
+  name_color: string
+  name_effect: string
 }
 
 function joinDate(iso: string) {
@@ -94,9 +98,16 @@ export default function Profile() {
               }
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl text-white mb-1.5" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
-                {profile.username}
-              </h1>
+              <UserName
+                username={profile.username}
+                role={profile.role}
+                stories_read={profile.stories_read}
+                name_prefix={profile.name_prefix}
+                name_color={profile.name_color}
+                name_effect={profile.name_effect}
+                className="text-2xl mb-1.5 block"
+                style={{ fontFamily: "'Cinzel Decorative', serif" } as React.CSSProperties}
+              />
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>
                   {badge.label}

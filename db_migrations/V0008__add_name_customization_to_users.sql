@@ -1,0 +1,4 @@
+ALTER TABLE t_p9569594_nex_gen_app.users 
+  ADD COLUMN IF NOT EXISTS name_prefix TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS name_color TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS name_effect TEXT DEFAULT '';

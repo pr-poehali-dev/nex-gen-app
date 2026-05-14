@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { fetchMe, logout, getSessionId, AUTH_URL, User } from '@/lib/auth'
+import UserName from '@/components/ui/UserName'
+import { STAFF_COLORS, STAFF_EFFECTS, STAFF_PREFIXES, getLevelByReads } from '@/lib/levels'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -19,6 +21,9 @@ interface FullUser extends User {
   stories_read: number
   comments_count: number
   avatar_url: string
+  name_prefix: string
+  name_color: string
+  name_effect: string
 }
 
 function joinDate(iso: string) {
@@ -35,6 +40,10 @@ export default function Account() {
   const [favGenre, setFavGenre] = useState('')
   const [saving, setSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [namePrefix, setNamePrefix] = useState('')
+  const [nameColor, setNameColor] = useState('')
+  const [nameEffect, setNameEffect] = useState('')
+  const [nameSaving, setNameSaving] = useState(false)
 
   useEffect(() => {
     fetchMe().then(u => {
@@ -46,12 +55,26 @@ export default function Account() {
           setUser(parsed)
           setBio(parsed.bio || '')
           setFavGenre(parsed.favorite_genre || '')
+          setNamePrefix(parsed.name_prefix || '')
+          setNameColor(parsed.name_color || '')
+          setNameEffect(parsed.name_effect || '')
           setLoading(false)
         })
     })
   }, [])
 
   const handleLogout = async () => { await logout(); navigate('/') }
+
+  const saveNameStyle = async () => {
+    setNameSaving(true)
+    await fetch(`${AUTH_URL}?action=update_profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid },
+      body: JSON.stringify({ bio, favorite_genre: favGenre, name_prefix: namePrefix, name_color: nameColor, name_effect: nameEffect }),
+    })
+    setUser(prev => prev ? { ...prev, name_prefix: namePrefix, name_color: nameColor, name_effect: nameEffect } : prev)
+    setNameSaving(false)
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -199,6 +222,73 @@ export default function Account() {
               )}
               <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-white/25 hover:text-white/50 transition-colors text-xs">
                 <Icon name="Pencil" size={12} /> Редактировать
+              </button>
+            </div>
+          )}
+
+          {/* Уровень (для обычных пользователей) */}
+          {user.role === 'user' && (
+            <div className="border rounded-sm px-5 py-4 mb-6 flex items-center gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex-1">
+                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
+                <UserName username={user.username} role={user.role} stories_read={user.stories_read} className="text-base" />
+                <p className="text-white/20 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
+              </div>
+            </div>
+          )}
+
+          {/* Кастомизация ника для стаффа */}
+          {(user.role === 'admin' || user.role === 'moderator') && (
+            <div className="border rounded-sm p-5 mb-6 space-y-5" style={{ borderColor: 'rgba(139,0,0,0.2)', backgroundColor: 'rgba(139,0,0,0.04)' }}>
+              <div>
+                <p className="text-white/50 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Icon name="Sparkles" size={12} className="text-[#8B0000]" /> Кастомизация ника
+                </p>
+                {/* Предпросмотр */}
+                <div className="mb-4 px-3 py-2 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+                  <p className="text-white/20 text-xs mb-1">Предпросмотр:</p>
+                  <UserName username={user.username} role={user.role} name_prefix={namePrefix} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
+                </div>
+              </div>
+              {/* Префикс */}
+              <div>
+                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Префикс</label>
+                <div className="flex flex-wrap gap-2">
+                  {STAFF_PREFIXES.map(p => (
+                    <button key={p || 'none'} onClick={() => setNamePrefix(p)}
+                      className="w-8 h-8 flex items-center justify-center border rounded-sm text-base transition-all"
+                      style={{ borderColor: namePrefix === p ? '#8B0000' : 'rgba(255,255,255,0.1)', backgroundColor: namePrefix === p ? 'rgba(139,0,0,0.2)' : 'transparent' }}>
+                      {p || <span className="text-white/20 text-xs">∅</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Цвет */}
+              <div>
+                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Цвет ника</label>
+                <div className="flex flex-wrap gap-2">
+                  {STAFF_COLORS.map(c => (
+                    <button key={c.value} onClick={() => setNameColor(c.value)} title={c.label}
+                      className="w-7 h-7 rounded-sm border-2 transition-all"
+                      style={{ backgroundColor: c.value, borderColor: nameColor === c.value ? '#fff' : 'transparent', transform: nameColor === c.value ? 'scale(1.2)' : 'scale(1)' }} />
+                  ))}
+                </div>
+              </div>
+              {/* Эффект */}
+              <div>
+                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Эффект</label>
+                <div className="flex flex-wrap gap-2">
+                  {STAFF_EFFECTS.map(e => (
+                    <button key={e.value} onClick={() => setNameEffect(e.value)}
+                      className="px-3 py-1.5 text-xs border rounded-sm transition-all"
+                      style={{ backgroundColor: nameEffect === e.value ? '#8B0000' : 'transparent', borderColor: nameEffect === e.value ? '#8B0000' : 'rgba(255,255,255,0.1)', color: nameEffect === e.value ? '#fff' : 'rgba(255,255,255,0.4)' }}>
+                      {e.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={saveNameStyle} disabled={nameSaving} className="flex items-center gap-2 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: '#8B0000', backgroundColor: '#8B0000', color: '#fff' }}>
+                {nameSaving ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Сохранить стиль
               </button>
             </div>
           )}

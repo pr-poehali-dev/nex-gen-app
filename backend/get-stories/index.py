@@ -21,11 +21,11 @@ def get_user(cur, session_id):
     if not session_id:
         return None
     cur.execute(
-        f"SELECT u.id, u.username, u.role FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.id = %s AND s.expires_at > NOW() AND u.status = 'active'",
+        f"SELECT u.id, u.username, u.role, u.name_prefix, u.name_color, u.name_effect FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.id = %s AND s.expires_at > NOW() AND u.status = 'active'",
         (session_id,)
     )
     row = cur.fetchone()
-    return {'id': row[0], 'username': row[1], 'role': row[2]} if row else None
+    return {'id': row[0], 'username': row[1], 'role': row[2], 'name_prefix': row[3] or '', 'name_color': row[4] or '', 'name_effect': row[5] or ''} if row else None
 
 def handler(event: dict, context) -> dict:
     """
@@ -70,20 +70,21 @@ def handler(event: dict, context) -> dict:
         )
         row = cur.fetchone()
         conn.commit(); cur.close(); conn.close()
-        return ok({'id': row[0], 'user_id': user['id'], 'username': user['username'], 'role': user['role'], 'text': text, 'avatar_url': avatar_url, 'created_at': str(row[1])})
+        return ok({'id': row[0], 'user_id': user['id'], 'username': user['username'], 'role': user['role'], 'text': text, 'avatar_url': avatar_url, 'name_prefix': user.get('name_prefix',''), 'name_color': user.get('name_color',''), 'name_effect': user.get('name_effect',''), 'created_at': str(row[1])})
 
     # GET комментарии — подтягиваем актуальный avatar_url из users
     if 'comments' in params:
         story_id = params['comments']
         cur.execute(f"""
-            SELECT c.id, c.user_id, c.username, c.role, c.text, c.created_at, u.avatar_url
+            SELECT c.id, c.user_id, c.username, c.role, c.text, c.created_at,
+                   u.avatar_url, u.name_prefix, u.name_color, u.name_effect
             FROM {SCHEMA}.comments c
             LEFT JOIN {SCHEMA}.users u ON u.id = c.user_id
             WHERE c.story_id = %s ORDER BY c.created_at ASC
         """, (story_id,))
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5]), 'avatar_url': r[6] or ''} for r in rows])
+        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5]), 'avatar_url': r[6] or '', 'name_prefix': r[7] or '', 'name_color': r[8] or '', 'name_effect': r[9] or ''} for r in rows])
 
     # GET одна история + трекинг просмотра
     story_id = params.get('id')

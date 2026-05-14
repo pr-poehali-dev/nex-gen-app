@@ -9,6 +9,15 @@
     text-wrap: balance;
   }
 
+  .animate-name-pulse {
+    animation: namePulse 2s ease-in-out infinite;
+  }
+  .animate-name-flicker {
+    animation: nameFlicker 3s linear infinite;
+  }
+  .animate-name-rainbow {
+    animation: nameRainbow 4s linear infinite;
+  }
   .horror-glow {
     text-shadow:
       0 0 20px rgba(139, 0, 0, 0.8),
@@ -17,6 +26,60 @@
 
   .blood-line {
     background: linear-gradient(90deg, transparent, #8b0000, transparent);
+  }
+}
+
+@keyframes namePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes nameFlicker {
+  0%,
+  95%,
+  100% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.2;
+  }
+  97% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 0.4;
+  }
+  99% {
+    opacity: 1;
+  }
+}
+
+@keyframes nameRainbow {
+  0% {
+    color: #ff0000;
+  }
+  17% {
+    color: #ff6600;
+  }
+  33% {
+    color: #cc00cc;
+  }
+  50% {
+    color: #0066ff;
+  }
+  67% {
+    color: #00cccc;
+  }
+  83% {
+    color: #cc0066;
+  }
+  100% {
+    color: #ff0000;
   }
 }
 

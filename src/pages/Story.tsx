@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { getCachedUser, getSessionId } from '@/lib/auth'
+import UserName from '@/components/ui/UserName'
 
 const API_URL = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
 
@@ -14,6 +15,7 @@ interface Story {
 interface Comment {
   id: number; user_id: number; username: string
   role: string; text: string; created_at: string; avatar_url: string
+  name_prefix?: string; name_color?: string; name_effect?: string
 }
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -168,8 +170,16 @@ export default function Story() {
                     }
                   </button>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <button onClick={() => navigate(`/u/${c.username}`)} className="text-white/70 hover:text-white transition-colors text-sm">{c.username}</button>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <UserName
+                        username={c.username}
+                        role={c.role}
+                        name_prefix={c.name_prefix}
+                        name_color={c.name_color}
+                        name_effect={c.name_effect}
+                        className="text-sm"
+                        onClick={() => navigate(`/u/${c.username}`)}
+                      />
                       {badge && <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>}
                       <span className="text-white/20 text-xs">{formatTime(c.created_at)}</span>
                     </div>

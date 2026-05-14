@@ -85,10 +85,10 @@ def handler(event: dict, context) -> dict:
             cur.close(); conn.close()
             return err('Сессия истекла', 401)
         stats = get_user_stats(cur, user['id'])
-        cur.execute(f"SELECT bio, favorite_genre, created_at, avatar_url FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
+        cur.execute(f"SELECT bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
         row = cur.fetchone()
         cur.close(); conn.close()
-        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), 'avatar_url': row[3] or '', **stats})
+        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), 'avatar_url': row[3] or '', 'name_prefix': row[4] or '', 'name_color': row[5] or '', 'name_effect': row[6] or '', **stats})
 
     # GET публичный профиль по username
     if method == 'GET' and action == 'profile':
@@ -96,7 +96,7 @@ def handler(event: dict, context) -> dict:
         if not username:
             cur.close(); conn.close()
             return err('Укажи username')
-        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at, avatar_url FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
+        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
         row = cur.fetchone()
         if not row:
             cur.close(); conn.close()
@@ -107,7 +107,9 @@ def handler(event: dict, context) -> dict:
         return ok({
             'id': uid, 'username': row[1], 'role': row[2],
             'bio': row[3] or '', 'favorite_genre': row[4] or '',
-            'created_at': str(row[5]), 'avatar_url': row[6] or '', **stats
+            'created_at': str(row[5]), 'avatar_url': row[6] or '',
+            'name_prefix': row[7] or '', 'name_color': row[8] or '', 'name_effect': row[9] or '',
+            **stats
         })
 
     # GET список пользователей (только admin)
@@ -182,7 +184,7 @@ def handler(event: dict, context) -> dict:
             cur.close(); conn.close()
             return ok({'success': True})
 
-        # Обновить профиль (bio, favorite_genre)
+        # Обновить профиль (bio, favorite_genre, кастомизация ника для стаффа)
         if action == 'update_profile':
             user = get_user_by_session(cur, session_id) if session_id else None
             if not user:
@@ -190,6 +192,23 @@ def handler(event: dict, context) -> dict:
                 return err('Нет доступа', 401)
             bio = (body.get('bio') or '')[:300]
             favorite_genre = (body.get('favorite_genre') or '')[:50]
+
+            # Кастомизация ника — только для стаффа
+            STAFF_COLORS = ['#cc0000','#ff3333','#ff6600','#cc6600','#9900cc','#0066cc','#00cc66','#cccc00','#ff66cc','#aaaaaa','#ffffff']
+            STAFF_EFFECTS = ['glow-red','glow-orange','glow-purple','glow-gold','pulse','flicker','rainbow','none']
+            STAFF_PREFIXES = ['👁','🕯','💀','🩸','👁‍🗨','⛧','🔮','🕸','🦇','👻','🌑','⚰️','🗡','🔥','❄️','']
+
+            if user['role'] in ('admin', 'moderator'):
+                name_prefix = body.get('name_prefix', None)
+                name_color = body.get('name_color', None)
+                name_effect = body.get('name_effect', None)
+                if name_prefix is not None and name_prefix in STAFF_PREFIXES:
+                    cur.execute(f"UPDATE {SCHEMA}.users SET name_prefix = %s WHERE id = %s", (name_prefix, user['id']))
+                if name_color is not None and name_color in STAFF_COLORS:
+                    cur.execute(f"UPDATE {SCHEMA}.users SET name_color = %s WHERE id = %s", (name_color, user['id']))
+                if name_effect is not None and name_effect in STAFF_EFFECTS:
+                    cur.execute(f"UPDATE {SCHEMA}.users SET name_effect = %s WHERE id = %s", (name_effect, user['id']))
+
             cur.execute(f"UPDATE {SCHEMA}.users SET bio = %s, favorite_genre = %s WHERE id = %s", (bio, favorite_genre, user['id']))
             conn.commit(); cur.close(); conn.close()
             return ok({'success': True})
