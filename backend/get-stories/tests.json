@@ -1,16 +1,8 @@
 {
   "tests": [
-    {
-      "name": "OPTIONS preflight",
-      "method": "OPTIONS",
-      "path": "/",
-      "expectedStatus": 200
-    },
-    {
-      "name": "Список опубликованных историй",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200
-    }
+    {"name": "OPTIONS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200},
+    {"name": "Список историй", "method": "GET", "path": "/", "expectedStatus": 200},
+    {"name": "Комментарии к истории", "method": "GET", "path": "/?comments=1", "expectedStatus": 200},
+    {"name": "POST без сессии — 403", "method": "POST", "path": "/", "body": {"story_id": 1, "text": "Тест"}, "expectedStatus": 403}
   ]
 }
