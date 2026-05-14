@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { fetchMe, logout, getSessionId, AUTH_URL, User } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
-import { STAFF_COLORS, STAFF_EFFECTS, STAFF_PREFIXES, getLevelByReads } from '@/lib/levels'
+import { NAME_COLORS, NAME_EFFECTS, getLevelByReads } from '@/lib/levels'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -40,7 +40,6 @@ export default function Account() {
   const [favGenre, setFavGenre] = useState('')
   const [saving, setSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
-  const [namePrefix, setNamePrefix] = useState('')
   const [nameColor, setNameColor] = useState('')
   const [nameEffect, setNameEffect] = useState('')
   const [nameSaving, setNameSaving] = useState(false)
@@ -55,7 +54,6 @@ export default function Account() {
           setUser(parsed)
           setBio(parsed.bio || '')
           setFavGenre(parsed.favorite_genre || '')
-          setNamePrefix(parsed.name_prefix || '')
           setNameColor(parsed.name_color || '')
           setNameEffect(parsed.name_effect || '')
           setLoading(false)
@@ -70,9 +68,9 @@ export default function Account() {
     await fetch(`${AUTH_URL}?action=update_profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid },
-      body: JSON.stringify({ bio, favorite_genre: favGenre, name_prefix: namePrefix, name_color: nameColor, name_effect: nameEffect }),
+      body: JSON.stringify({ bio, favorite_genre: favGenre, name_color: nameColor, name_effect: nameEffect }),
     })
-    setUser(prev => prev ? { ...prev, name_prefix: namePrefix, name_color: nameColor, name_effect: nameEffect } : prev)
+    setUser(prev => prev ? { ...prev, name_color: nameColor, name_effect: nameEffect } : prev)
     setNameSaving(false)
   }
 
@@ -247,27 +245,14 @@ export default function Account() {
                 {/* Предпросмотр */}
                 <div className="mb-4 px-3 py-2 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(0,0,0,0.3)' }}>
                   <p className="text-white/20 text-xs mb-1">Предпросмотр:</p>
-                  <UserName username={user.username} name_prefix={namePrefix} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
-                </div>
-              </div>
-              {/* Префикс */}
-              <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Префикс</label>
-                <div className="flex flex-wrap gap-2">
-                  {STAFF_PREFIXES.map(p => (
-                    <button key={p || 'none'} onClick={() => setNamePrefix(p)}
-                      className="w-8 h-8 flex items-center justify-center border rounded-sm text-base transition-all"
-                      style={{ borderColor: namePrefix === p ? '#8B0000' : 'rgba(255,255,255,0.1)', backgroundColor: namePrefix === p ? 'rgba(139,0,0,0.2)' : 'transparent' }}>
-                      {p || <span className="text-white/20 text-xs">∅</span>}
-                    </button>
-                  ))}
+                  <UserName username={user.username} name_color={nameColor} name_effect={nameEffect} className="text-sm" />
                 </div>
               </div>
               {/* Цвет */}
               <div>
                 <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Цвет ника</label>
                 <div className="flex flex-wrap gap-2">
-                  {STAFF_COLORS.map(c => (
+                  {NAME_COLORS.map(c => (
                     <button key={c.value} onClick={() => setNameColor(c.value)} title={c.label}
                       className="w-7 h-7 rounded-sm border-2 transition-all"
                       style={{ backgroundColor: c.value, borderColor: nameColor === c.value ? '#fff' : 'transparent', transform: nameColor === c.value ? 'scale(1.2)' : 'scale(1)' }} />
@@ -278,7 +263,7 @@ export default function Account() {
               <div>
                 <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">Эффект</label>
                 <div className="flex flex-wrap gap-2">
-                  {STAFF_EFFECTS.map(e => (
+                  {NAME_EFFECTS.map(e => (
                     <button key={e.value} onClick={() => setNameEffect(e.value)}
                       className="px-3 py-1.5 text-xs border rounded-sm transition-all"
                       style={{ backgroundColor: nameEffect === e.value ? '#8B0000' : 'transparent', borderColor: nameEffect === e.value ? '#8B0000' : 'rgba(255,255,255,0.1)', color: nameEffect === e.value ? '#fff' : 'rgba(255,255,255,0.4)' }}>
