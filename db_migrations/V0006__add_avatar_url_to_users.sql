@@ -1,0 +1,1 @@
+ALTER TABLE t_p9569594_nex_gen_app.users ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT '';

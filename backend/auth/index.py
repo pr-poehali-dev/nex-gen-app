@@ -2,7 +2,9 @@ import json
 import os
 import hashlib
 import secrets
+import base64
 import psycopg2
+import boto3
 from datetime import datetime, timedelta
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 't_p9569594_nex_gen_app')
@@ -83,10 +85,10 @@ def handler(event: dict, context) -> dict:
             cur.close(); conn.close()
             return err('Сессия истекла', 401)
         stats = get_user_stats(cur, user['id'])
-        cur.execute(f"SELECT bio, favorite_genre, created_at FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
+        cur.execute(f"SELECT bio, favorite_genre, created_at, avatar_url FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
         row = cur.fetchone()
         cur.close(); conn.close()
-        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), **stats})
+        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), 'avatar_url': row[3] or '', **stats})
 
     # GET публичный профиль по username
     if method == 'GET' and action == 'profile':
@@ -94,7 +96,7 @@ def handler(event: dict, context) -> dict:
         if not username:
             cur.close(); conn.close()
             return err('Укажи username')
-        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
+        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at, avatar_url FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
         row = cur.fetchone()
         if not row:
             cur.close(); conn.close()
@@ -105,7 +107,7 @@ def handler(event: dict, context) -> dict:
         return ok({
             'id': uid, 'username': row[1], 'role': row[2],
             'bio': row[3] or '', 'favorite_genre': row[4] or '',
-            'created_at': str(row[5]), **stats
+            'created_at': str(row[5]), 'avatar_url': row[6] or '', **stats
         })
 
     # GET список пользователей (только admin)
@@ -191,6 +193,40 @@ def handler(event: dict, context) -> dict:
             cur.execute(f"UPDATE {SCHEMA}.users SET bio = %s, favorite_genre = %s WHERE id = %s", (bio, favorite_genre, user['id']))
             conn.commit(); cur.close(); conn.close()
             return ok({'success': True})
+
+        # Загрузка аватара
+        if action == 'upload_avatar':
+            user = get_user_by_session(cur, session_id) if session_id else None
+            if not user:
+                cur.close(); conn.close()
+                return err('Нет доступа', 401)
+            image_b64 = body.get('image')
+            mime = body.get('mime', 'image/jpeg')
+            if not image_b64:
+                cur.close(); conn.close()
+                return err('Нет изображения')
+            # Декодируем base64
+            try:
+                image_data = base64.b64decode(image_b64)
+            except Exception:
+                cur.close(); conn.close()
+                return err('Неверный формат изображения')
+            if len(image_data) > 2 * 1024 * 1024:
+                cur.close(); conn.close()
+                return err('Файл слишком большой (макс. 2MB)')
+            ext = 'jpg' if 'jpeg' in mime else mime.split('/')[-1]
+            key = f"avatars/{user['id']}.{ext}"
+            s3 = boto3.client(
+                's3',
+                endpoint_url='https://bucket.poehali.dev',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            )
+            s3.put_object(Bucket='files', Key=key, Body=image_data, ContentType=mime)
+            avatar_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}?t={int(datetime.now().timestamp())}"
+            cur.execute(f"UPDATE {SCHEMA}.users SET avatar_url = %s WHERE id = %s", (avatar_url, user['id']))
+            conn.commit(); cur.close(); conn.close()
+            return ok({'success': True, 'avatar_url': avatar_url})
 
         # Обновить пользователя (только admin)
         if action == 'update_user':

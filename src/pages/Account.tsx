@@ -18,6 +18,7 @@ interface FullUser extends User {
   created_at: string
   stories_read: number
   comments_count: number
+  avatar_url: string
 }
 
 function joinDate(iso: string) {
@@ -33,6 +34,7 @@ export default function Account() {
   const [bio, setBio] = useState('')
   const [favGenre, setFavGenre] = useState('')
   const [saving, setSaving] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
     fetchMe().then(u => {
@@ -50,6 +52,27 @@ export default function Account() {
   }, [])
 
   const handleLogout = async () => { await logout(); navigate('/') }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) { alert('Файл слишком большой (макс. 2MB)'); return }
+    setAvatarUploading(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const b64 = (reader.result as string).split(',')[1]
+      const res = await fetch(`${AUTH_URL}?action=upload_avatar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Session-Id': sid },
+        body: JSON.stringify({ image: b64, mime: file.type }),
+      })
+      const data = await res.json()
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data
+      if (parsed.avatar_url) setUser(prev => prev ? { ...prev, avatar_url: parsed.avatar_url } : prev)
+      setAvatarUploading(false)
+    }
+    reader.readAsDataURL(file)
+  }
 
   const saveProfile = async () => {
     setSaving(true)
@@ -95,16 +118,30 @@ export default function Account() {
 
           {/* Шапка */}
           <div className="flex items-start gap-5 mb-8 pb-8 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="w-14 h-14 rounded-sm flex items-center justify-center flex-shrink-0 text-xl font-bold"
-              style={{ backgroundColor: `${badge.color}18`, border: `1px solid ${badge.color}44`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
-              {user.username[0].toUpperCase()}
-            </div>
+            {/* Аватар с загрузкой */}
+            <label className="relative w-14 h-14 rounded-sm flex-shrink-0 cursor-pointer group overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+              {user.avatar_url
+                ? <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
+                    {user.username[0].toUpperCase()}
+                  </div>
+              }
+              {/* Оверлей при наведении */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}>
+                {avatarUploading
+                  ? <Icon name="Loader" size={16} className="text-white animate-spin" />
+                  : <Icon name="Camera" size={16} className="text-white" />
+                }
+              </div>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
+            </label>
             <div>
               <h1 className="text-2xl text-white" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{user.username}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>
                 <span className="text-white/20 text-xs">с {joinDate(user.created_at)}</span>
               </div>
+              <p className="text-white/15 text-xs mt-1.5">Нажми на фото чтобы изменить</p>
             </div>
           </div>
 

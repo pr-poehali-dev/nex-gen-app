@@ -26,6 +26,7 @@ interface ProfileData {
   created_at: string
   stories_read: number
   comments_count: number
+  avatar_url: string
 }
 
 function joinDate(iso: string) {
@@ -84,11 +85,13 @@ export default function Profile() {
 
           {/* Шапка профиля */}
           <div className="flex items-start gap-5 mb-10 pb-10 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div
-              className="w-16 h-16 rounded-sm flex items-center justify-center flex-shrink-0 text-2xl font-bold"
-              style={{ backgroundColor: `${badge.color}18`, border: `1px solid ${badge.color}44`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}
-            >
-              {profile.username[0].toUpperCase()}
+            <div className="w-16 h-16 rounded-sm flex-shrink-0 overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
+                    {profile.username[0].toUpperCase()}
+                  </div>
+              }
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl text-white mb-1.5" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
