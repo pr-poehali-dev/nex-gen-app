@@ -23,7 +23,7 @@ export default function Section({ id, title, subtitle, content, isActive, showBu
 
       <motion.h2
         className="text-4xl md:text-6xl lg:text-[5rem] xl:text-[6rem] font-bold leading-[1.1] tracking-tight max-w-4xl text-white"
-        style={{ fontFamily: "'IM Fell English', serif", fontStyle: 'italic' }}
+        style={{ fontFamily: "'Cinzel Decorative', serif" }}
         initial={{ opacity: 0, y: 50 }}
         animate={isActive ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7 }}

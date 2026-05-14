@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Creepster&family=IM+Fell+English:ital@0;1&family=Inter:wght@300;400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=IM+Fell+English:ital@0;1&family=Inter:wght@300;400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -60,8 +60,9 @@
   h1,
   h2,
   h3 {
-    font-family: "IM Fell English", serif;
-    font-style: italic;
+    font-family: "Cinzel Decorative", serif;
+    font-style: normal;
+    letter-spacing: 0.02em;
   }
 
   html {
