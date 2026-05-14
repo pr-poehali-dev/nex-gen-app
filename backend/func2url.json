@@ -1,4 +1,5 @@
 {
+  "get-stories": "https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab",
   "admin-stories": "https://functions.poehali.dev/1dfd0899-ad39-4aec-835b-43bb3396248d",
   "submit-story": "https://functions.poehali.dev/e051682f-c039-4b37-81c8-dbd8077e10db"
 }
