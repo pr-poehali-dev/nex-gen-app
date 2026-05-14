@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+# redeploy to pick up ADMIN_SECRET_KEY
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 't_p9569594_nex_gen_app')
 ADMIN_KEY = os.environ.get('ADMIN_SECRET_KEY', '')
