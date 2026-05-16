@@ -85,10 +85,10 @@ def handler(event: dict, context) -> dict:
             cur.close(); conn.close()
             return err('Сессия истекла', 401)
         stats = get_user_stats(cur, user['id'])
-        cur.execute(f"SELECT bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
+        cur.execute(f"SELECT bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect, badge_text, badge_effect FROM {SCHEMA}.users WHERE id = %s", (user['id'],))
         row = cur.fetchone()
         cur.close(); conn.close()
-        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), 'avatar_url': row[3] or '', 'name_prefix': row[4] or '', 'name_color': row[5] or '', 'name_effect': row[6] or '', **stats})
+        return ok({**user, 'bio': row[0] or '', 'favorite_genre': row[1] or '', 'created_at': str(row[2]), 'avatar_url': row[3] or '', 'name_prefix': row[4] or '', 'name_color': row[5] or '', 'name_effect': row[6] or '', 'badge_text': row[7] or '', 'badge_effect': row[8] or '', **stats})
 
     # GET публичный профиль по username
     if method == 'GET' and action == 'profile':
@@ -96,7 +96,7 @@ def handler(event: dict, context) -> dict:
         if not username:
             cur.close(); conn.close()
             return err('Укажи username')
-        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
+        cur.execute(f"SELECT id, username, role, bio, favorite_genre, created_at, avatar_url, name_prefix, name_color, name_effect, badge_text, badge_effect FROM {SCHEMA}.users WHERE username = %s AND status = 'active'", (username,))
         row = cur.fetchone()
         if not row:
             cur.close(); conn.close()
@@ -109,6 +109,7 @@ def handler(event: dict, context) -> dict:
             'bio': row[3] or '', 'favorite_genre': row[4] or '',
             'created_at': str(row[5]), 'avatar_url': row[6] or '',
             'name_prefix': row[7] or '', 'name_color': row[8] or '', 'name_effect': row[9] or '',
+            'badge_text': row[10] or '', 'badge_effect': row[11] or '',
             **stats
         })
 
@@ -182,10 +183,10 @@ def handler(event: dict, context) -> dict:
         if not is_admin_key and (not user or user['role'] != 'admin'):
             cur.close(); conn.close()
             return err('Нет доступа', 403)
-        cur.execute(f"SELECT id, username, email, role, status, created_at, name_color, name_effect FROM {SCHEMA}.users ORDER BY created_at DESC")
+        cur.execute(f"SELECT id, username, email, role, status, created_at, name_color, name_effect, badge_text, badge_effect, ban_reason FROM {SCHEMA}.users ORDER BY created_at DESC")
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return ok([{'id': r[0], 'username': r[1], 'email': r[2], 'role': r[3], 'status': r[4], 'created_at': r[5], 'name_color': r[6] or '', 'name_effect': r[7] or ''} for r in rows])
+        return ok([{'id': r[0], 'username': r[1], 'email': r[2], 'role': r[3], 'status': r[4], 'created_at': r[5], 'name_color': r[6] or '', 'name_effect': r[7] or '', 'badge_text': r[8] or '', 'badge_effect': r[9] or '', 'ban_reason': r[10] or ''} for r in rows])
 
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
@@ -373,11 +374,14 @@ def handler(event: dict, context) -> dict:
                 return err('Укажи id пользователя')
             new_status = body.get('status')
             new_role = body.get('role')
-            new_color = body.get('name_color')  # None = не менять, '' = сбросить
+            new_color = body.get('name_color')
             new_effect = body.get('name_effect')
+            new_badge_text = body.get('badge_text')   # None = не менять, '' = сбросить
+            new_badge_effect = body.get('badge_effect')
 
             ALLOWED_COLORS = ['#cc0000','#ff3333','#ff6600','#cc6600','#9900cc','#6600ff','#0066cc','#00cc66','#cccc00','#ff66cc','#aaaaaa','#ffffff','']
             ALLOWED_EFFECTS = ['','glow-red','glow-orange','glow-purple','glow-blue','glow-gold','glow-green','pulse','flicker','shake','rainbow','ghost','blood-drip']
+            ALLOWED_BADGE_EFFECTS = ['','badge-blood','badge-gold','badge-ice','badge-void','badge-fire','badge-poison','badge-ghost','badge-crimson','badge-eldritch','badge-glitch','badge-shadow']
 
             if new_status and new_status in ('active', 'pending', 'rejected'):
                 cur.execute(f"UPDATE {SCHEMA}.users SET status = %s WHERE id = %s", (new_status, target_id))
@@ -387,12 +391,17 @@ def handler(event: dict, context) -> dict:
                 cur.execute(f"UPDATE {SCHEMA}.users SET name_color = %s WHERE id = %s", (new_color, target_id))
             if new_effect is not None and new_effect in ALLOWED_EFFECTS:
                 cur.execute(f"UPDATE {SCHEMA}.users SET name_effect = %s WHERE id = %s", (new_effect, target_id))
+            if new_badge_text is not None:
+                badge_val = new_badge_text.strip()[:40] if new_badge_text else None
+                cur.execute(f"UPDATE {SCHEMA}.users SET badge_text = %s WHERE id = %s", (badge_val or None, target_id))
+            if new_badge_effect is not None and new_badge_effect in ALLOWED_BADGE_EFFECTS:
+                cur.execute(f"UPDATE {SCHEMA}.users SET badge_effect = %s WHERE id = %s", (new_badge_effect or None, target_id))
             conn.commit()
             # Возвращаем обновлённые данные пользователя
-            cur.execute(f"SELECT name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (target_id,))
+            cur.execute(f"SELECT name_color, name_effect, badge_text, badge_effect FROM {SCHEMA}.users WHERE id = %s", (target_id,))
             row = cur.fetchone()
             cur.close(); conn.close()
-            return ok({'success': True, 'name_color': row[0] or '' if row else '', 'name_effect': row[1] or '' if row else ''})
+            return ok({'success': True, 'name_color': row[0] or '' if row else '', 'name_effect': row[1] or '' if row else '', 'badge_text': row[2] or '' if row else '', 'badge_effect': row[3] or '' if row else ''})
 
         # Бан пользователя с причиной (только admin)
         if action == 'ban_user':

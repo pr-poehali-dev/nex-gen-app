@@ -1,0 +1,3 @@
+ALTER TABLE t_p9569594_nex_gen_app.users
+  ADD COLUMN IF NOT EXISTS badge_text VARCHAR(40),
+  ADD COLUMN IF NOT EXISTS badge_effect VARCHAR(40);

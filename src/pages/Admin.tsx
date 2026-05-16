@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { AUTH_URL, getSessionId, getCachedUser, fetchMe, logout, User } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
-import { NAME_COLORS, NAME_EFFECTS } from '@/lib/levels'
+import UserBadge from '@/components/ui/UserBadge'
+import { NAME_COLORS, NAME_EFFECTS, BADGE_EFFECTS } from '@/lib/levels'
 
 const STORIES_API = 'https://functions.poehali.dev/1dfd0899-ad39-4aec-835b-43bb3396248d'
 const MOD_API = 'https://functions.poehali.dev/3c308c13-780b-4cbd-82f9-2544dd692ce9'
@@ -68,6 +69,7 @@ interface AppUser {
   id: number; username: string; email: string
   role: 'user' | 'moderator' | 'admin'; status: string; created_at: string
   name_color?: string; name_effect?: string; ban_reason?: string
+  badge_text?: string; badge_effect?: string
 }
 interface ModerationStats {
   totals: { pending: number; approved: number; rejected: number; deleted: number; total: number }
@@ -109,6 +111,7 @@ export default function Admin() {
   const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
   const [expandedUser, setExpandedUser] = useState<number | null>(null)
   const [banReason, setBanReason] = useState<Record<number, string>>({})
+  const [badgeInput, setBadgeInput] = useState<Record<number, string>>({})
 
   const [stats, setStats] = useState<ModerationStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
@@ -201,12 +204,18 @@ export default function Admin() {
     setModActionLoading(null)
   }
 
-  const updateUser = async (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string }) => {
+  const updateUser = async (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string }) => {
     setUserActionLoading(id)
     const res = await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, ...patch }) })
     const data = await res.json()
     const parsed = typeof data === 'string' ? JSON.parse(data) : data
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...patch, ...(parsed.name_color !== undefined ? { name_color: parsed.name_color } : {}), ...(parsed.name_effect !== undefined ? { name_effect: parsed.name_effect } : {}) } : u))
+    setUsers(prev => prev.map(u => u.id === id ? {
+      ...u, ...patch,
+      ...(parsed.name_color !== undefined ? { name_color: parsed.name_color } : {}),
+      ...(parsed.name_effect !== undefined ? { name_effect: parsed.name_effect } : {}),
+      ...(parsed.badge_text !== undefined ? { badge_text: parsed.badge_text } : {}),
+      ...(parsed.badge_effect !== undefined ? { badge_effect: parsed.badge_effect } : {}),
+    } : u))
     setUserActionLoading(null)
   }
 
@@ -564,6 +573,64 @@ export default function Admin() {
                                   </button>
                                 ))}
                               </div>
+                            </div>
+
+                            {/* Бейдж */}
+                            <div>
+                              <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Звание / Бейдж</label>
+                              <div className="flex gap-2 mb-3">
+                                <input
+                                  className={`${smallInputClass} flex-1`}
+                                  placeholder="Текст звания (макс. 40 символов)..."
+                                  maxLength={40}
+                                  value={badgeInput[u.id] !== undefined ? badgeInput[u.id] : (u.badge_text || '')}
+                                  onChange={e => setBadgeInput(prev => ({ ...prev, [u.id]: e.target.value }))}
+                                />
+                                <button
+                                  onClick={() => {
+                                    const text = badgeInput[u.id] !== undefined ? badgeInput[u.id] : (u.badge_text || '')
+                                    updateUser(u.id, { badge_text: text })
+                                    setBadgeInput(prev => { const n = { ...prev }; delete n[u.id]; return n })
+                                  }}
+                                  disabled={userActionLoading === u.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm"
+                                  style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
+                                >
+                                  <Icon name="Check" size={12} /> Сохранить
+                                </button>
+                                {u.badge_text && (
+                                  <button
+                                    onClick={() => updateUser(u.id, { badge_text: '', badge_effect: '' })}
+                                    disabled={userActionLoading === u.id}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm"
+                                    style={{ borderColor: 'rgba(139,0,0,0.4)', color: 'rgba(200,50,50,0.7)' }}
+                                  >
+                                    <Icon name="X" size={12} />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Эффект бейджа */}
+                              <div className="flex flex-wrap gap-2">
+                                {BADGE_EFFECTS.map(ef => (
+                                  <button key={ef.value}
+                                    onClick={() => updateUser(u.id, { badge_effect: ef.value })}
+                                    className="px-2 py-1 text-xs rounded-sm transition-all"
+                                    style={{
+                                      border: u.badge_effect === ef.value ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                                      opacity: u.badge_effect === ef.value ? 1 : 0.6,
+                                      fontWeight: u.badge_effect === ef.value ? 600 : 400,
+                                    }}
+                                  >
+                                    {ef.value ? <UserBadge text={ef.label} effect={ef.value} /> : <span className="text-white/30">{ef.label}</span>}
+                                  </button>
+                                ))}
+                              </div>
+                              {u.badge_text && (
+                                <div className="mt-3 flex items-center gap-2">
+                                  <span className="text-white/20 text-xs">Превью:</span>
+                                  <UserBadge text={u.badge_text} effect={u.badge_effect} />
+                                </div>
+                              )}
                             </div>
 
                             {/* Бан */}

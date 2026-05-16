@@ -36,6 +36,22 @@
   .blood-line {
     background: linear-gradient(90deg, transparent, #8b0000, transparent);
   }
+
+  .animate-badge-glitch {
+    animation: badgeGlitch 3s steps(1) infinite;
+  }
+  .animate-badge-eldritch {
+    animation: badgeEldritch 4s ease-in-out infinite;
+  }
+  .animate-badge-ghost {
+    animation: badgeGhost 3s ease-in-out infinite;
+  }
+  .animate-badge-fire {
+    animation: badgeFire 2s ease-in-out infinite;
+  }
+  .animate-badge-blood {
+    animation: badgeBlood 3s ease-in-out infinite;
+  }
 }
 
 @keyframes namePulse {
@@ -130,6 +146,89 @@
     text-shadow:
       0 4px 12px rgba(180, 0, 0, 0.9),
       0 0 30px rgba(180, 0, 0, 0.4);
+  }
+}
+
+@keyframes badgeGlitch {
+  0%,
+  90%,
+  100% {
+    transform: translate(0);
+    filter: none;
+  }
+  92% {
+    transform: translate(-2px, 0);
+    filter: hue-rotate(90deg) brightness(1.5);
+  }
+  94% {
+    transform: translate(2px, 0);
+    filter: hue-rotate(-90deg);
+  }
+  96% {
+    transform: translate(0, 1px);
+    filter: brightness(2);
+  }
+  98% {
+    transform: translate(-1px, 0);
+  }
+}
+
+@keyframes badgeEldritch {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px rgba(180, 0, 255, 0.4),
+      0 0 20px rgba(100, 0, 180, 0.2);
+  }
+  33% {
+    box-shadow:
+      0 0 14px rgba(180, 0, 255, 0.7),
+      0 0 30px rgba(120, 0, 220, 0.4);
+  }
+  66% {
+    box-shadow:
+      0 0 4px rgba(100, 0, 180, 0.3),
+      0 0 10px rgba(80, 0, 140, 0.15);
+  }
+}
+
+@keyframes badgeGhost {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  55% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes badgeFire {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(255, 100, 0, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(255, 100, 0, 0.8),
+      0 -2px 16px rgba(255, 180, 0, 0.4);
+  }
+}
+
+@keyframes badgeBlood {
+  0%,
+  100% {
+    box-shadow: 0 0 6px rgba(139, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(180, 0, 0, 0.9),
+      0 2px 20px rgba(100, 0, 0, 0.5);
   }
 }
 

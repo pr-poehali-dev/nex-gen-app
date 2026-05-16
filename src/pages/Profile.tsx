@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { AUTH_URL } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
+import UserBadge from '@/components/ui/UserBadge'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -31,6 +32,8 @@ interface ProfileData {
   name_prefix: string
   name_color: string
   name_effect: string
+  badge_text: string
+  badge_effect: string
 }
 
 function joinDate(iso: string) {
@@ -111,6 +114,7 @@ export default function Profile() {
                 <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>
                   {badge.label}
                 </span>
+                {profile.badge_text && <UserBadge text={profile.badge_text} effect={profile.badge_effect} />}
                 <span className="text-white/20 text-xs">с {joinDate(profile.created_at)}</span>
               </div>
               {profile.bio && (

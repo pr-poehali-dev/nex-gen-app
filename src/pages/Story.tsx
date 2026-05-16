@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { getCachedUser, getSessionId } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
+import UserBadge from '@/components/ui/UserBadge'
 
 const API_URL = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
 
@@ -16,6 +17,7 @@ interface Comment {
   id: number; user_id: number; username: string
   role: string; text: string; created_at: string; avatar_url: string
   name_prefix?: string; name_color?: string; name_effect?: string
+  badge_text?: string; badge_effect?: string
 }
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -185,6 +187,7 @@ export default function Story() {
                         onClick={() => navigate(`/u/${c.username}`)}
                       />
                       {badge && <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>}
+                      {c.badge_text && <UserBadge text={c.badge_text} effect={c.badge_effect} />}
                       <span className="text-white/20 text-xs">{formatTime(c.created_at)}</span>
                     </div>
                     <p className="text-white/50 text-sm leading-6">{c.text}</p>
