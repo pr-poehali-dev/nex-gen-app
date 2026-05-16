@@ -84,6 +84,10 @@ export default function Catalog() {
             </button>
           )}
           <ChatPanel />
+          <button onClick={() => navigate('/about')} className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm">
+            <Icon name="Info" size={16} />
+            <span className="hidden sm:inline">О проекте</span>
+          </button>
           <button onClick={() => navigate('/submit')} className="flex items-center gap-1.5 text-[#8B0000] hover:text-red-400 transition-colors text-sm">
             <Icon name="PenLine" size={16} />
             <span className="hidden sm:inline">Предложить</span>
