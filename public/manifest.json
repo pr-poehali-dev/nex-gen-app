@@ -1,26 +1,29 @@
 {
-  "name": "ShadowTales",
+  "name": "ShadowTales — Страшные истории",
   "short_name": "ShadowTales",
-  "description": "Площадка страшных историй — хоррор, мистика, крипипаста",
+  "description": "Читай страшные истории, крипипасту и мистику. Предлагай свои — лучшие публикуются.",
   "start_url": "/catalog",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#080808",
   "theme_color": "#080808",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["books", "entertainment"],
+  "screenshots": [],
   "icons": [
     {
       "src": "https://cdn.poehali.dev/projects/2a4b2c3a-eb17-46b6-b2da-d1deead42197/files/favicon-1778772521682.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "https://cdn.poehali.dev/projects/2a4b2c3a-eb17-46b6-b2da-d1deead42197/files/favicon-1778772521682.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
-  ],
-  "categories": ["books", "entertainment"],
-  "lang": "ru"
+  ]
 }
