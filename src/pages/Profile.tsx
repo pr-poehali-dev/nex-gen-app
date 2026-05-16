@@ -34,6 +34,7 @@ interface ProfileData {
   name_effect: string
   badge_text: string
   badge_effect: string
+  custom_role: string
 }
 
 function joinDate(iso: string) {
@@ -69,7 +70,8 @@ export default function Profile() {
     </div>
   )
 
-  const badge = ROLE_BADGE[profile.role] || ROLE_BADGE.user
+  const baseBadge = ROLE_BADGE[profile.role] || ROLE_BADGE.user
+  const badge = { label: profile.custom_role || baseBadge.label, color: baseBadge.color }
   const genreIcon = GENRES[profile.favorite_genre] || null
 
   return (

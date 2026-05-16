@@ -27,6 +27,7 @@ interface FullUser extends User {
   name_effect: string
   badge_text: string
   badge_effect: string
+  custom_role: string
 }
 
 function joinDate(iso: string) {
@@ -103,7 +104,8 @@ export default function Account() {
   )
   if (!user) return null
 
-  const badge = ROLE_BADGE[user.role] || ROLE_BADGE.user
+  const baseBadge = ROLE_BADGE[user.role] || ROLE_BADGE.user
+  const badge = { label: user.custom_role || baseBadge.label, color: baseBadge.color }
   const inputClass = "w-full bg-transparent border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20 resize-none"
 
   return (

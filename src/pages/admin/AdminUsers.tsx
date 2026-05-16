@@ -8,7 +8,7 @@ import { AppUser, STATUS_LABEL, ROLE_LABEL } from './admin.types'
 
 interface Props {
   users: AppUser[]
-  onUpdate: (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string }) => Promise<void>
+  onUpdate: (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string; custom_role?: string }) => Promise<void>
   onBan: (id: number, reason: string) => Promise<void>
   onUnban: (id: number) => Promise<void>
   smallInputClass: string
@@ -20,6 +20,7 @@ export default function AdminUsers({ users, onUpdate, onBan, onUnban, smallInput
   const [expandedUser, setExpandedUser] = useState<number | null>(null)
   const [banReason, setBanReason] = useState<Record<number, string>>({})
   const [badgeInput, setBadgeInput] = useState<Record<number, string>>({})
+  const [customRoleInput, setCustomRoleInput] = useState<Record<number, string>>({})
 
   const userCounts = {
     all: users.length,
@@ -105,10 +106,10 @@ export default function AdminUsers({ users, onUpdate, onBan, onUnban, smallInput
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
                     <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
 
-                      {/* Роль */}
+                      {/* Системная роль */}
                       {u.status === 'active' && (
                         <div>
-                          <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Роль</label>
+                          <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Системная роль</label>
                           <select value={u.role} onChange={e => handleUpdate(u.id, { role: e.target.value })}
                             className="text-xs px-3 py-2 rounded-sm border outline-none"
                             style={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
@@ -118,6 +119,43 @@ export default function AdminUsers({ users, onUpdate, onBan, onUnban, smallInput
                           </select>
                         </div>
                       )}
+
+                      {/* Кастомная роль */}
+                      <div>
+                        <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Кастомная роль</label>
+                        <p className="text-white/20 text-xs mb-2">Заменяет отображаемое название роли везде на сайте</p>
+                        <div className="flex gap-2">
+                          <input
+                            className={`${smallInputClass} flex-1`}
+                            placeholder="Например: Тёмный жрец, Хранитель архива..."
+                            maxLength={40}
+                            value={customRoleInput[u.id] !== undefined ? customRoleInput[u.id] : (u.custom_role || '')}
+                            onChange={e => setCustomRoleInput(prev => ({ ...prev, [u.id]: e.target.value }))}
+                          />
+                          <button
+                            onClick={() => {
+                              const val = customRoleInput[u.id] !== undefined ? customRoleInput[u.id] : (u.custom_role || '')
+                              handleUpdate(u.id, { custom_role: val })
+                              setCustomRoleInput(prev => { const n = { ...prev }; delete n[u.id]; return n })
+                            }}
+                            disabled={userActionLoading === u.id}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm"
+                            style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
+                          >
+                            <Icon name="Check" size={12} /> Сохранить
+                          </button>
+                          {u.custom_role && (
+                            <button
+                              onClick={() => handleUpdate(u.id, { custom_role: '' })}
+                              disabled={userActionLoading === u.id}
+                              className="px-3 py-1.5 text-xs border rounded-sm"
+                              style={{ borderColor: 'rgba(139,0,0,0.4)', color: 'rgba(200,50,50,0.7)' }}
+                            >
+                              <Icon name="X" size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Цвет ника */}
                       <div>

@@ -17,7 +17,7 @@ interface Comment {
   id: number; user_id: number; username: string
   role: string; text: string; created_at: string; avatar_url: string
   name_prefix?: string; name_color?: string; name_effect?: string
-  badge_text?: string; badge_effect?: string
+  badge_text?: string; badge_effect?: string; custom_role?: string
 }
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
@@ -165,7 +165,8 @@ export default function Story() {
 
           <div className="space-y-5 mb-8">
             {comments.map(c => {
-              const badge = ROLE_BADGE[c.role]
+              const baseBadge = ROLE_BADGE[c.role]
+              const badge = baseBadge && c.custom_role ? { label: c.custom_role, color: baseBadge.color } : (c.custom_role ? { label: c.custom_role, color: '#666' } : baseBadge)
               return (
                 <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-4">
                   <button onClick={() => navigate(`/u/${c.username}`)} className="w-7 h-7 rounded-sm flex-shrink-0 mt-0.5 overflow-hidden hover:opacity-70 transition-opacity" style={{ border: `1px solid ${badge?.color || '#333'}44` }}>
