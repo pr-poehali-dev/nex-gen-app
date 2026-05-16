@@ -3,9 +3,49 @@ import os
 import hashlib
 import secrets
 import base64
+import smtplib
+import random
 import psycopg2
 import boto3
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
+
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+
+def send_verification_email(to_email: str, username: str, code: str) -> bool:
+    """Отправляет письмо с кодом подтверждения через Яндекс SMTP."""
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'{code} — код подтверждения ShadowTales'
+        msg['From'] = f'ShadowTales <{SMTP_USER}>'
+        msg['To'] = to_email
+
+        html = f"""
+        <div style="background:#080808;padding:40px 20px;font-family:'Georgia',serif;max-width:480px;margin:0 auto;">
+          <p style="color:#8B0000;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 16px">ShadowTales</p>
+          <h1 style="color:#ffffff;font-size:22px;margin:0 0 24px;font-weight:normal;">Подтверди регистрацию</h1>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;margin:0 0 32px;line-height:1.6;">
+            Привет, {username}! Введи этот код на сайте:
+          </p>
+          <div style="background:#0e0e0e;border:1px solid #8B0000;padding:24px;text-align:center;margin:0 0 32px;">
+            <span style="color:#ffffff;font-size:36px;letter-spacing:12px;font-family:monospace;">{code}</span>
+          </div>
+          <p style="color:rgba(255,255,255,0.25);font-size:12px;margin:0;line-height:1.6;">
+            Код действует 15 минут. Если ты не регистрировался — просто игнорируй это письмо.
+          </p>
+        </div>
+        """
+        msg.attach(MIMEText(html, 'html', 'utf-8'))
+
+        with smtplib.SMTP_SSL('smtp.yandex.ru', 465) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print(f'SMTP error: {e}')
+        return False
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 't_p9569594_nex_gen_app')
 ADMIN_KEY = os.environ.get('ADMIN_SECRET_KEY', '')
@@ -192,7 +232,84 @@ def handler(event: dict, context) -> dict:
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
 
-        # Регистрация
+        # Шаг 1: отправить код на email
+        if action == 'register_send':
+            username = (body.get('username') or '').strip()
+            email = (body.get('email') or '').strip().lower()
+            password = body.get('password') or ''
+            if not username or not email or not password:
+                cur.close(); conn.close()
+                return err('Заполни все поля')
+            if len(username) < 3:
+                cur.close(); conn.close()
+                return err('Имя пользователя минимум 3 символа')
+            if len(password) < 6:
+                cur.close(); conn.close()
+                return err('Пароль минимум 6 символов')
+            if '@' not in email:
+                cur.close(); conn.close()
+                return err('Некорректный email')
+            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE username = %s OR email = %s", (username, email))
+            if cur.fetchone():
+                cur.close(); conn.close()
+                return err('Такой пользователь уже существует')
+            # Удаляем старые коды для этого email
+            cur.execute(f"DELETE FROM {SCHEMA}.email_verifications WHERE email = %s", (email,))
+            code = str(random.randint(100000, 999999))
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.email_verifications (email, username, password_hash, code) VALUES (%s, %s, %s, %s)",
+                (email, username, hash_password(password), code)
+            )
+            conn.commit()
+            cur.close(); conn.close()
+            sent = send_verification_email(email, username, code)
+            if not sent:
+                return err('Не удалось отправить письмо. Проверь email адрес.')
+            return ok({'success': True, 'email': email})
+
+        # Шаг 2: проверить код и создать аккаунт
+        if action == 'register_verify':
+            email = (body.get('email') or '').strip().lower()
+            code = (body.get('code') or '').strip()
+            if not email or not code:
+                cur.close(); conn.close()
+                return err('Укажи email и код')
+            cur.execute(
+                f"SELECT id, username, password_hash, attempts, expires_at FROM {SCHEMA}.email_verifications WHERE email = %s AND code = %s ORDER BY created_at DESC LIMIT 1",
+                (email, code)
+            )
+            row = cur.fetchone()
+            if not row:
+                # Увеличиваем счётчик попыток
+                cur.execute(f"UPDATE {SCHEMA}.email_verifications SET attempts = attempts + 1 WHERE email = %s", (email,))
+                conn.commit(); cur.close(); conn.close()
+                return err('Неверный код')
+            ver_id, username, password_hash, attempts, expires_at = row
+            if attempts >= 5:
+                cur.close(); conn.close()
+                return err('Слишком много попыток. Запроси новый код.')
+            if datetime.now(expires_at.tzinfo) > expires_at:
+                cur.close(); conn.close()
+                return err('Код устарел. Зарегистрируйся заново.')
+            # Финальная проверка что username/email ещё свободны
+            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE username = %s OR email = %s", (username, email))
+            if cur.fetchone():
+                cur.close(); conn.close()
+                return err('Такой пользователь уже существует')
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.users (username, email, password_hash, role, status) VALUES (%s, %s, %s, 'user', 'active') RETURNING id",
+                (username, email, password_hash)
+            )
+            user_id = cur.fetchone()[0]
+            # Удаляем использованный код
+            cur.execute(f"DELETE FROM {SCHEMA}.email_verifications WHERE id = %s", (ver_id,))
+            # Создаём сессию сразу
+            sid = secrets.token_hex(32)
+            cur.execute(f"INSERT INTO {SCHEMA}.sessions (id, user_id, expires_at) VALUES (%s, %s, %s)", (sid, user_id, datetime.now() + timedelta(days=30)))
+            conn.commit(); cur.close(); conn.close()
+            return ok({'success': True, 'session_id': sid, 'user': {'id': user_id, 'username': username, 'email': email, 'role': 'user'}})
+
+        # Старая регистрация (оставляем для совместимости, сразу active)
         if action == 'register':
             username = (body.get('username') or '').strip()
             email = (body.get('email') or '').strip()
@@ -208,7 +325,7 @@ def handler(event: dict, context) -> dict:
                 cur.close(); conn.close()
                 return err('Такой пользователь уже существует')
             cur.execute(
-                f"INSERT INTO {SCHEMA}.users (username, email, password_hash, role, status) VALUES (%s, %s, %s, 'user', 'pending') RETURNING id",
+                f"INSERT INTO {SCHEMA}.users (username, email, password_hash, role, status) VALUES (%s, %s, %s, 'user', 'active') RETURNING id",
                 (username, email, hash_password(password))
             )
             conn.commit(); cur.close(); conn.close()
@@ -232,7 +349,7 @@ def handler(event: dict, context) -> dict:
             user_id, username, email, role, status = row
             if status == 'pending':
                 cur.close(); conn.close()
-                return err('Заявка ещё не одобрена администратором')
+                return err('Аккаунт ожидает подтверждения email')
             if status == 'rejected':
                 cur.close(); conn.close()
                 return err('Твоя заявка была отклонена')
