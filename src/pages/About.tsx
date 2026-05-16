@@ -254,14 +254,21 @@ export default function About() {
           className="mb-16 grid grid-cols-1 sm:grid-cols-2 gap-4"
         >
           <div
-            className="p-5 rounded"
+            className="p-5 rounded flex flex-col"
             style={{ backgroundColor: 'rgba(139,0,0,0.06)', border: '1px solid rgba(139,0,0,0.2)' }}
           >
             <p className="text-[#8B0000] text-xs uppercase tracking-widest mb-2">Набор открыт</p>
             <p className="text-white/75 text-sm font-medium mb-1">Ищем модераторов</p>
-            <p className="text-white/40 text-xs leading-relaxed">
-              Мы набираем команду модераторов — людей, которые любят жанр и готовы помогать развивать площадку. Если интересно — зарегистрируйся и подай заявку.
+            <p className="text-white/40 text-xs leading-relaxed mb-4">
+              Мы набираем команду модераторов — людей, которые любят жанр и готовы помогать развивать площадку.
             </p>
+            <button
+              onClick={() => navigate('/join')}
+              className="mt-auto text-xs py-2 px-4 rounded transition-all hover:opacity-80 active:scale-95 text-white font-medium"
+              style={{ backgroundColor: '#8B0000' }}
+            >
+              Подать заявку
+            </button>
           </div>
           <div
             className="p-5 rounded"
