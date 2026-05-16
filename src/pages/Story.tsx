@@ -82,8 +82,36 @@ export default function Story() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
-      <Icon name="Loader" size={16} className="text-white/30 animate-spin" />
+    <div className="min-h-screen" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.2) 0%, transparent 60%)' }} />
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
+        <div className="h-4 w-16 rounded-sm animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-4 w-28 rounded-sm animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="h-4 w-10 rounded-sm animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+      </header>
+      <main className="max-w-2xl mx-auto px-4 md:px-8 py-10 md:py-16 animate-pulse">
+        <div className="mb-10">
+          <div className="flex gap-3 mb-4">
+            <div className="h-4 w-16 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <div className="h-4 w-24 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+          </div>
+          <div className="h-8 w-3/4 rounded-sm mb-3" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
+          <div className="h-6 w-1/2 rounded-sm mb-6" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+          <div className="flex gap-4">
+            <div className="h-3 w-20 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+            <div className="h-3 w-12 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-full rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+              <div className="h-4 w-5/6 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+              <div className="h-4 w-4/5 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }} />
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   )
 
