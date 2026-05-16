@@ -134,7 +134,7 @@ export default function About() {
             ShadowTales
           </h1>
           <p className="text-white/50 text-base md:text-lg leading-relaxed max-w-xl mx-auto">
-            Площадка для тех, кто любит истории, от которых не спится. Читай, делись своим, общайся с теми, кто понимает.
+            Площадка для тех, кто любит истории, от которых не спится. Читай, делись своим, общайся с живым сообществом.
           </p>
         </motion.div>
 
@@ -143,13 +143,30 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-16 p-6 md:p-8 rounded"
-          style={{ backgroundColor: 'rgba(139,0,0,0.06)', border: '1px solid rgba(139,0,0,0.15)' }}
+          className="mb-16"
         >
-          <p className="text-[#8B0000] text-xs uppercase tracking-widest mb-3">Миссия</p>
-          <p className="text-white/70 leading-relaxed text-sm md:text-base">
-            Мы собираем лучшие страшные истории рунета в одном месте — без регистрационных барьеров, без алгоритмов, без мусора. Только истории, которые действительно цепляют. ShadowTales — это живое сообщество авторов и читателей жанра, где каждый может найти что-то по-настоящему пугающее.
-          </p>
+          <p className="text-[#8B0000] text-xs uppercase tracking-widest mb-6">Миссия</p>
+          <div
+            className="relative p-6 md:p-10 rounded overflow-hidden"
+            style={{ backgroundColor: 'rgba(139,0,0,0.04)', border: '1px solid rgba(139,0,0,0.18)' }}
+          >
+            <div
+              className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l"
+              style={{ backgroundColor: '#8B0000' }}
+            />
+            <p
+              className="text-white/30 text-xs uppercase tracking-[0.3em] mb-4"
+              style={{ fontFamily: "'Cinzel Decorative', serif" }}
+            >
+              ShadowTales
+            </p>
+            <p className="text-white/80 leading-loose text-sm md:text-base">
+              Мы собираем лучшие страшные истории рунета в одном месте — без алгоритмов, без мусора, без лишних барьеров. Только истории, которые действительно цепляют.
+            </p>
+            <p className="text-white/40 leading-loose text-sm md:text-base mt-4">
+              ShadowTales — это живое сообщество авторов и читателей жанра. Каждая история проходит проверку модерацией, прежде чем попасть в каталог.
+            </p>
+          </div>
         </motion.div>
 
         {/* Возможности */}
@@ -188,20 +205,17 @@ export default function About() {
           <p className="text-[#8B0000] text-xs uppercase tracking-widest mb-6">Для кого</p>
           <div className="space-y-3">
             {[
-              ['👁', 'Читателей хоррора и мистики', 'Ты уже всё посмотрел на Netflix — здесь найдёшь истории, которые не экранизировали.'],
-              ['🕯', 'Авторов жанра', 'Хочешь поделиться своей историей с живой аудиторией — без лишних шагов.'],
-              ['💀', 'Ценителей крипипасты', 'Классика и новинки рунета в одном каталоге.'],
-            ].map(([icon, title, desc]) => (
+              ['Читателей хоррора и мистики', 'Истории, которые не экранизировали — только текст, только атмосфера.'],
+              ['Авторов жанра', 'Хочешь поделиться своей историей с живой аудиторией — без лишних шагов.'],
+              ['Ценителей крипипасты', 'Классика и новинки рунета в одном каталоге.'],
+            ].map(([title, desc]) => (
               <div
                 key={title}
-                className="flex gap-4 p-4 rounded"
+                className="p-4 rounded"
                 style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
               >
-                <span className="text-xl flex-shrink-0">{icon}</span>
-                <div>
-                  <p className="text-white/75 text-sm font-medium mb-0.5">{title}</p>
-                  <p className="text-white/35 text-xs leading-relaxed">{desc}</p>
-                </div>
+                <p className="text-white/75 text-sm font-medium mb-1">{title}</p>
+                <p className="text-white/35 text-xs leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -212,35 +226,23 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center mb-16"
+          className="mb-16"
         >
-          <div
-            className="p-8 md:p-12 rounded"
-            style={{ background: 'linear-gradient(135deg, rgba(139,0,0,0.12) 0%, rgba(8,8,8,0) 100%)', border: '1px solid rgba(139,0,0,0.2)' }}
-          >
-            <p
-              className="text-2xl md:text-3xl text-white mb-3"
-              style={{ fontFamily: "'Cinzel Decorative', serif" }}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => navigate('/catalog')}
+              className="flex-1 px-8 py-3 text-white text-sm font-medium rounded transition-all hover:opacity-90 active:scale-95"
+              style={{ backgroundColor: '#8B0000' }}
             >
-              Готов войти в тень?
-            </p>
-            <p className="text-white/40 text-sm mb-8">Сотни историй уже ждут тебя</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => navigate('/catalog')}
-                className="px-8 py-3 text-white text-sm font-medium rounded transition-all hover:opacity-90 active:scale-95"
-                style={{ backgroundColor: '#8B0000' }}
-              >
-                Читать истории
-              </button>
-              <button
-                onClick={() => navigate('/register')}
-                className="px-8 py-3 text-white/60 hover:text-white text-sm font-medium rounded transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                Создать аккаунт
-              </button>
-            </div>
+              Читать истории
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="flex-1 px-8 py-3 text-white/60 hover:text-white text-sm font-medium rounded transition-all"
+              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Создать аккаунт
+            </button>
           </div>
         </motion.div>
 
@@ -260,7 +262,7 @@ export default function About() {
 
         {/* Подвал */}
         <div className="mt-16 pt-8 border-t text-center" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-          <p className="text-white/20 text-xs">© 2024 ShadowTales. Все истории проверены модерацией.</p>
+          <p className="text-white/20 text-xs">© 2026 ShadowTales</p>
         </div>
       </main>
     </div>
