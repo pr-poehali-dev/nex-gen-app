@@ -8,7 +8,7 @@ import { AppUser, STATUS_LABEL, ROLE_LABEL } from './admin.types'
 
 interface Props {
   users: AppUser[]
-  onUpdate: (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string; custom_role?: string }) => Promise<void>
+  onUpdate: (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string; custom_role?: string; hide_role?: boolean }) => Promise<void>
   onBan: (id: number, reason: string) => Promise<void>
   onUnban: (id: number) => Promise<void>
   smallInputClass: string
@@ -108,15 +108,30 @@ export default function AdminUsers({ users, onUpdate, onBan, onUnban, smallInput
 
                       {/* Системная роль */}
                       {u.status === 'active' && (
-                        <div>
-                          <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Системная роль</label>
-                          <select value={u.role} onChange={e => handleUpdate(u.id, { role: e.target.value })}
-                            className="text-xs px-3 py-2 rounded-sm border outline-none"
-                            style={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
-                            <option value="user">Пользователь</option>
-                            <option value="moderator">Модератор</option>
-                            <option value="admin">Администратор</option>
-                          </select>
+                        <div className="flex items-end justify-between gap-4">
+                          <div>
+                            <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Системная роль</label>
+                            <select value={u.role} onChange={e => handleUpdate(u.id, { role: e.target.value })}
+                              className="text-xs px-3 py-2 rounded-sm border outline-none"
+                              style={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+                              <option value="user">Пользователь</option>
+                              <option value="moderator">Модератор</option>
+                              <option value="admin">Администратор</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => handleUpdate(u.id, { hide_role: !u.hide_role })}
+                            disabled={userActionLoading === u.id}
+                            className="flex items-center gap-2 px-3 py-2 text-xs border rounded-sm transition-all"
+                            style={{
+                              borderColor: u.hide_role ? '#8B0000' : 'rgba(255,255,255,0.1)',
+                              backgroundColor: u.hide_role ? 'rgba(139,0,0,0.15)' : 'transparent',
+                              color: u.hide_role ? '#cc4444' : 'rgba(255,255,255,0.35)',
+                            }}
+                          >
+                            <Icon name={u.hide_role ? 'EyeOff' : 'Eye'} size={12} />
+                            {u.hide_role ? 'Роль скрыта' : 'Скрыть роль'}
+                          </button>
                         </div>
                       )}
 

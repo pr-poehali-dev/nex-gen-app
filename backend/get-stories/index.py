@@ -78,14 +78,14 @@ def handler(event: dict, context) -> dict:
         cur.execute(f"""
             SELECT c.id, c.user_id, c.username, c.role, c.text, c.created_at,
                    u.avatar_url, u.name_prefix, u.name_color, u.name_effect,
-                   u.badge_text, u.badge_effect, u.custom_role
+                   u.badge_text, u.badge_effect, u.custom_role, u.hide_role
             FROM {SCHEMA}.comments c
             LEFT JOIN {SCHEMA}.users u ON u.id = c.user_id
             WHERE c.story_id = %s ORDER BY c.created_at ASC
         """, (story_id,))
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5]), 'avatar_url': r[6] or '', 'name_prefix': r[7] or '', 'name_color': r[8] or '', 'name_effect': r[9] or '', 'badge_text': r[10] or '', 'badge_effect': r[11] or '', 'custom_role': r[12] or ''} for r in rows])
+        return ok([{'id': r[0], 'user_id': r[1], 'username': r[2], 'role': r[3], 'text': r[4], 'created_at': str(r[5]), 'avatar_url': r[6] or '', 'name_prefix': r[7] or '', 'name_color': r[8] or '', 'name_effect': r[9] or '', 'badge_text': r[10] or '', 'badge_effect': r[11] or '', 'custom_role': r[12] or '', 'hide_role': bool(r[13])} for r in rows])
 
     # GET одна история + трекинг просмотра
     story_id = params.get('id')

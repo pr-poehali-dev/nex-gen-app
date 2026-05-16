@@ -28,6 +28,7 @@ interface FullUser extends User {
   badge_text: string
   badge_effect: string
   custom_role: string
+  hide_role: boolean
 }
 
 function joinDate(iso: string) {
@@ -150,7 +151,7 @@ export default function Account() {
             <div>
               <h1 className="text-xl md:text-2xl text-white" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{user.username}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>
+                {!user.hide_role && <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>}
                 {user.badge_text && <UserBadge text={user.badge_text} effect={user.badge_effect} />}
                 <span className="text-white/20 text-xs">с {joinDate(user.created_at)}</span>
               </div>

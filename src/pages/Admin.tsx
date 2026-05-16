@@ -145,7 +145,7 @@ export default function Admin() {
     }
   }
 
-  const updateUser = async (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string; custom_role?: string }) => {
+  const updateUser = async (id: number, patch: { status?: string; role?: string; name_color?: string; name_effect?: string; badge_text?: string; badge_effect?: string; custom_role?: string; hide_role?: boolean }) => {
     const res = await fetch(`${AUTH_URL}?action=update_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, ...patch }) })
     const data = await res.json()
     const parsed = typeof data === 'string' ? JSON.parse(data) : data
@@ -156,6 +156,7 @@ export default function Admin() {
       ...(parsed.badge_text !== undefined ? { badge_text: parsed.badge_text } : {}),
       ...(parsed.badge_effect !== undefined ? { badge_effect: parsed.badge_effect } : {}),
       ...(parsed.custom_role !== undefined ? { custom_role: parsed.custom_role } : {}),
+      ...(parsed.hide_role !== undefined ? { hide_role: parsed.hide_role } : {}),
     } : u))
   }
 

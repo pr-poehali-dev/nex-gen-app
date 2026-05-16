@@ -11,7 +11,7 @@ export interface AppUser {
   id: number; username: string; email: string
   role: 'user' | 'moderator' | 'admin'; status: string; created_at: string
   name_color?: string; name_effect?: string; ban_reason?: string
-  badge_text?: string; badge_effect?: string; custom_role?: string
+  badge_text?: string; badge_effect?: string; custom_role?: string; hide_role?: boolean
 }
 export interface ModerationStats {
   totals: { pending: number; approved: number; rejected: number; deleted: number; total: number }

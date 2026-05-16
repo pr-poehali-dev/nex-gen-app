@@ -35,6 +35,7 @@ interface ProfileData {
   badge_text: string
   badge_effect: string
   custom_role: string
+  hide_role: boolean
 }
 
 function joinDate(iso: string) {
@@ -113,9 +114,11 @@ export default function Profile() {
                 style={{ fontFamily: "'Cinzel Decorative', serif" } as React.CSSProperties}
               />
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>
-                  {badge.label}
-                </span>
+                {!profile.hide_role && (
+                  <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>
+                    {badge.label}
+                  </span>
+                )}
                 {profile.badge_text && <UserBadge text={profile.badge_text} effect={profile.badge_effect} />}
                 <span className="text-white/20 text-xs">с {joinDate(profile.created_at)}</span>
               </div>
