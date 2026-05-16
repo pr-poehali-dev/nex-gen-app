@@ -38,11 +38,11 @@ def get_user_by_session(cur, session_id: str):
 
 def get_user_stats(cur, user_id: int) -> dict:
     """Статистика читателя."""
-    cur.execute(f"SELECT COUNT(*) FROM {SCHEMA}.story_views WHERE user_id = %s", (user_id,))
+    cur.execute(f"SELECT COUNT(DISTINCT story_id) FROM {SCHEMA}.story_views WHERE user_id = %s", (user_id,))
     stories_read = cur.fetchone()[0]
 
     cur.execute(f"""
-        SELECT s.genre, COUNT(*) as cnt
+        SELECT s.genre, COUNT(DISTINCT v.story_id) as cnt
         FROM {SCHEMA}.story_views v
         JOIN {SCHEMA}.story_submissions s ON s.id = v.story_id
         WHERE v.user_id = %s
