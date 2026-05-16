@@ -9,12 +9,9 @@ import { NAME_COLORS, NAME_EFFECTS } from '@/lib/levels'
 const STORIES_API = 'https://functions.poehali.dev/1dfd0899-ad39-4aec-835b-43bb3396248d'
 const MOD_API = 'https://functions.poehali.dev/3c308c13-780b-4cbd-82f9-2544dd692ce9'
 
-// Резервный вход по секретному ключу (для первого запуска)
-function AdminKeyLogin({ onSuccess, navigate, inputClass, sid }: {
-  onSuccess: (role: string) => void
+function AdminKeyLogin({ navigate, inputClass }: {
   navigate: ReturnType<typeof useNavigate>
   inputClass: string
-  sid: string
 }) {
   const [key, setKey] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,7 +22,6 @@ function AdminKeyLogin({ onSuccess, navigate, inputClass, sid }: {
     setLoading(true); setError('')
     const res = await fetch(STORIES_API, { headers: { 'X-Admin-Key': key.trim() } })
     if (res.status === 401) { setError('Неверный ключ'); setLoading(false); return }
-    // Ключ верный — сохраняем как виртуального admin-пользователя
     localStorage.setItem('admin_key', key.trim())
     window.location.reload()
   }
@@ -61,7 +57,8 @@ function AdminKeyLogin({ onSuccess, navigate, inputClass, sid }: {
 
 interface Submission {
   id: number; title: string; author_name: string; genre: string
-  text: string; status: 'pending' | 'approved' | 'rejected' | 'deleted'; created_at: string
+  text: string; status: 'pending' | 'approved' | 'rejected' | 'deleted'
+  created_at: string; moderator_comment: string; moderated_at: string | null; moderated_by: string
 }
 interface ModApp {
   id: number; name: string; contact: string; reason: string
@@ -70,7 +67,12 @@ interface ModApp {
 interface AppUser {
   id: number; username: string; email: string
   role: 'user' | 'moderator' | 'admin'; status: string; created_at: string
-  name_color?: string; name_effect?: string
+  name_color?: string; name_effect?: string; ban_reason?: string
+}
+interface ModerationStats {
+  totals: { pending: number; approved: number; rejected: number; deleted: number; total: number }
+  moderators: { username: string; role: string; approved: number; rejected: number; last_action: string | null }[]
+  by_day: { date: string; count: number }[]
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -79,21 +81,23 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   rejected: { label: 'Отклонено',       color: '#8B0000' },
   deleted:  { label: 'Удалено',         color: '#555' },
   active:   { label: 'Активен',         color: '#2e7d32' },
+  banned:   { label: 'Заблокирован',    color: '#8B0000' },
 }
-
 const ROLE_LABEL: Record<string, string> = { user: 'Пользователь', moderator: 'Модератор', admin: 'Администратор' }
 
 export default function Admin() {
   const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(getCachedUser())
   const [authLoading, setAuthLoading] = useState(true)
-
-  const [tab, setTab] = useState<'stories' | 'moderators' | 'users'>('stories')
+  const [tab, setTab] = useState<'stories' | 'moderators' | 'users' | 'stats'>('stories')
 
   const [stories, setStories] = useState<Submission[]>([])
   const [storyFilter, setStoryFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending')
   const [expandedStory, setExpandedStory] = useState<number | null>(null)
   const [storyActionLoading, setStoryActionLoading] = useState<number | null>(null)
+  const [storyComment, setStoryComment] = useState<Record<number, string>>({})
+  const [editingStory, setEditingStory] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', text: '', genre: '' })
 
   const [modApps, setModApps] = useState<ModApp[]>([])
   const [modFilter, setModFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending')
@@ -101,14 +105,18 @@ export default function Admin() {
   const [modActionLoading, setModActionLoading] = useState<number | null>(null)
 
   const [users, setUsers] = useState<AppUser[]>([])
-  const [userFilter, setUserFilter] = useState<'pending' | 'active' | 'all'>('pending')
+  const [userFilter, setUserFilter] = useState<'pending' | 'active' | 'banned' | 'all'>('pending')
   const [userActionLoading, setUserActionLoading] = useState<number | null>(null)
+  const [expandedUser, setExpandedUser] = useState<number | null>(null)
+  const [banReason, setBanReason] = useState<Record<number, string>>({})
+
+  const [stats, setStats] = useState<ModerationStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState(false)
 
   const sid = getSessionId()
   const adminKey = localStorage.getItem('admin_key') || ''
 
   useEffect(() => {
-    // Если есть сохранённый admin_key — сразу входим как admin без сессии
     if (adminKey) {
       setUser({ id: 0, username: 'Администратор', email: '', role: 'admin', status: 'active' })
       setAuthLoading(false)
@@ -142,13 +150,42 @@ export default function Admin() {
     }
   }
 
+  const loadStats = async () => {
+    setStatsLoading(true)
+    const h = adminKey ? { 'X-Admin-Key': adminKey } : { 'X-Session-Id': sid }
+    const res = await fetch(`${STORIES_API}?action=stats`, { headers: h })
+    const data = await res.json()
+    setStats(data)
+    setStatsLoading(false)
+  }
+
+  useEffect(() => {
+    if (tab === 'stats' && !stats) loadStats()
+  }, [tab])
+
   const moderateStory = async (id: number, action: 'approve' | 'reject' | 'delete') => {
     setStoryActionLoading(id)
-    const res = await fetch(STORIES_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action }) })
+    const comment = storyComment[id] || ''
+    const res = await fetch(STORIES_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action, comment }) })
     if (res.ok) {
-      if (action === 'delete') setStories(prev => prev.filter(s => s.id !== id))
-      else { const ns = action === 'approve' ? 'approved' : 'rejected'; setStories(prev => prev.map(s => s.id === id ? { ...s, status: ns as Submission['status'] } : s)) }
+      if (action === 'delete') {
+        setStories(prev => prev.filter(s => s.id !== id))
+      } else {
+        const ns = action === 'approve' ? 'approved' : 'rejected'
+        setStories(prev => prev.map(s => s.id === id ? { ...s, status: ns as Submission['status'], moderator_comment: comment } : s))
+      }
       setExpandedStory(null)
+      setStoryComment(prev => { const n = { ...prev }; delete n[id]; return n })
+    }
+    setStoryActionLoading(null)
+  }
+
+  const saveEditStory = async (id: number) => {
+    setStoryActionLoading(id)
+    const res = await fetch(STORIES_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action: 'edit', ...editForm }) })
+    if (res.ok) {
+      setStories(prev => prev.map(s => s.id === id ? { ...s, ...editForm } : s))
+      setEditingStory(null)
     }
     setStoryActionLoading(null)
   }
@@ -156,7 +193,11 @@ export default function Admin() {
   const moderateMod = async (id: number, action: 'approve' | 'reject') => {
     setModActionLoading(id)
     const res = await fetch(MOD_API, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, action }) })
-    if (res.ok) { const ns = action === 'approve' ? 'approved' : 'rejected'; setModApps(prev => prev.map(a => a.id === id ? { ...a, status: ns as ModApp['status'] } : a)); setExpandedMod(null) }
+    if (res.ok) {
+      const ns = action === 'approve' ? 'approved' : 'rejected'
+      setModApps(prev => prev.map(a => a.id === id ? { ...a, status: ns as ModApp['status'] } : a))
+      setExpandedMod(null)
+    }
     setModActionLoading(null)
   }
 
@@ -169,6 +210,25 @@ export default function Admin() {
     setUserActionLoading(null)
   }
 
+  const banUser = async (id: number) => {
+    const reason = (banReason[id] || '').trim()
+    if (!reason) return
+    setUserActionLoading(id)
+    const res = await fetch(`${AUTH_URL}?action=ban_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id, reason }) })
+    if (res.ok) {
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'banned', ban_reason: reason } : u))
+      setBanReason(prev => { const n = { ...prev }; delete n[id]; return n })
+    }
+    setUserActionLoading(null)
+  }
+
+  const unbanUser = async (id: number) => {
+    setUserActionLoading(id)
+    const res = await fetch(`${AUTH_URL}?action=unban_user`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ id }) })
+    if (res.ok) setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'active', ban_reason: undefined } : u))
+    setUserActionLoading(null)
+  }
+
   const handleLogout = async () => {
     localStorage.removeItem('admin_key')
     await logout()
@@ -176,17 +236,16 @@ export default function Admin() {
   }
 
   const inputClass = "w-full bg-transparent border border-white/10 rounded-sm px-4 py-3 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20"
+  const smallInputClass = "bg-transparent border border-white/10 rounded-sm px-3 py-2 text-white text-xs outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20"
 
-  // Экран загрузки
   if (authLoading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
       <Icon name="Loader" size={20} className="text-white/30 animate-spin" />
     </div>
   )
 
-  // Нет доступа — показываем форму входа по секретному ключу + ссылку на логин
   if (!user || (user.role !== 'admin' && user.role !== 'moderator')) return (
-    <AdminKeyLogin onSuccess={(role) => { loadAll(role); window.location.reload() }} navigate={navigate} inputClass={inputClass} sid={sid} />
+    <AdminKeyLogin navigate={navigate} inputClass={inputClass} />
   )
 
   const isAdmin = user.role === 'admin'
@@ -195,13 +254,14 @@ export default function Admin() {
   const filteredMods = modApps.filter(a => modFilter === 'all' || a.status === modFilter)
   const modCounts = { all: modApps.length, pending: modApps.filter(a => a.status === 'pending').length, approved: modApps.filter(a => a.status === 'approved').length, rejected: modApps.filter(a => a.status === 'rejected').length }
   const filteredUsers = users.filter(u => userFilter === 'all' || u.status === userFilter)
-  const userCounts = { all: users.length, pending: users.filter(u => u.status === 'pending').length, active: users.filter(u => u.status === 'active').length }
+  const userCounts = { all: users.length, pending: users.filter(u => u.status === 'pending').length, active: users.filter(u => u.status === 'active').length, banned: users.filter(u => u.status === 'banned').length }
 
   const tabs = [
     { id: 'stories' as const, label: 'Истории', icon: 'BookOpen' as const, count: storyCounts.pending },
     ...(isAdmin ? [
-      { id: 'moderators' as const, label: 'Заявки в модераторы', icon: 'Shield' as const, count: modCounts.pending },
+      { id: 'moderators' as const, label: 'Модераторы', icon: 'Shield' as const, count: modCounts.pending },
       { id: 'users' as const, label: 'Пользователи', icon: 'Users' as const, count: userCounts.pending },
+      { id: 'stats' as const, label: 'Статистика', icon: 'BarChart2' as const, count: 0 },
     ] : []),
   ]
 
@@ -225,16 +285,16 @@ export default function Admin() {
 
       <main className="max-w-3xl mx-auto px-6 md:px-8 py-10">
         {/* Вкладки */}
-        <div className="flex gap-1 mb-8 border-b border-white/5">
+        <div className="flex gap-1 mb-8 border-b border-white/5 overflow-x-auto">
           {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center gap-2 px-4 py-3 text-sm border-b-2 transition-all -mb-px"
+            <button key={t.id} onClick={() => setTab(t.id)} className="flex items-center gap-2 px-4 py-3 text-sm border-b-2 transition-all -mb-px whitespace-nowrap"
               style={{ borderColor: tab === t.id ? '#8B0000' : 'transparent', color: tab === t.id ? '#fff' : 'rgba(255,255,255,0.35)' }}>
               <Icon name={t.icon} size={14} />
               {t.label}
               {t.count > 0 && <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: '#8B0000', color: '#fff' }}>{t.count}</span>}
             </button>
           ))}
-          <button onClick={() => loadAll(user.role)} className="ml-auto flex items-center gap-1 text-white/25 hover:text-white transition-colors text-xs px-2">
+          <button onClick={() => loadAll(user.role)} className="ml-auto flex items-center gap-1 text-white/25 hover:text-white transition-colors text-xs px-2 whitespace-nowrap">
             <Icon name="RefreshCw" size={13} /> Обновить
           </button>
         </div>
@@ -257,41 +317,82 @@ export default function Admin() {
                 {filteredStories.map(story => {
                   const st = STATUS_LABEL[story.status] || STATUS_LABEL.rejected
                   const isOpen = expandedStory === story.id
+                  const isEditing = editingStory === story.id
                   return (
                     <motion.div key={story.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="border rounded-sm overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
                       <button className="w-full text-left px-5 py-4 flex items-center justify-between gap-4" onClick={() => setExpandedStory(isOpen ? null : story.id)}>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs px-2 py-0.5 rounded-sm border" style={{ borderColor: '#8B0000', color: '#8B0000' }}>{story.genre}</span>
                             <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${st.color}22`, color: st.color }}>{st.label}</span>
+                            {story.moderated_by && <span className="text-white/20 text-xs">модератор: {story.moderated_by}</span>}
                           </div>
                           <p className="text-white text-base truncate" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{story.title}</p>
                           <p className="text-white/30 text-xs mt-0.5">{story.author_name} · {new Date(story.created_at).toLocaleDateString('ru-RU')}</p>
+                          {story.moderator_comment && (
+                            <p className="text-white/40 text-xs mt-1 italic">Комментарий: {story.moderator_comment}</p>
+                          )}
                         </div>
                         <Icon name={isOpen ? 'ChevronUp' : 'ChevronDown'} size={18} className="text-white/30 flex-shrink-0" />
                       </button>
+
                       <AnimatePresence>
                         {isOpen && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
-                            <div className="px-5 pb-5">
-                              <div className="text-white/50 text-sm leading-7 whitespace-pre-wrap mb-5 max-h-64 overflow-y-auto pr-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>{story.text}</div>
-                              <div className="flex gap-3 flex-wrap">
-                                {story.status === 'pending' && (
-                                  <>
-                                    <button onClick={() => moderateStory(story.id, 'approve')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
-                                      {storyActionLoading === story.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Check" size={14} />} Опубликовать
+                            <div className="px-5 pb-5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+
+                              {/* Редактирование */}
+                              {isEditing ? (
+                                <div className="space-y-3 mb-4">
+                                  <input className={`${smallInputClass} w-full`} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="Заголовок" />
+                                  <textarea className={`${smallInputClass} w-full resize-none`} rows={8} value={editForm.text} onChange={e => setEditForm(f => ({ ...f, text: e.target.value }))} placeholder="Текст истории" />
+                                  <div className="flex gap-2">
+                                    <button onClick={() => saveEditStory(story.id)} disabled={storyActionLoading === story.id} className="flex items-center gap-1 px-4 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
+                                      {storyActionLoading === story.id ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Сохранить
                                     </button>
-                                    <button onClick={() => moderateStory(story.id, 'reject')} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
-                                      <Icon name="X" size={14} /> Отклонить
-                                    </button>
-                                  </>
-                                )}
-                                {isAdmin && (
-                                  <button onClick={() => { if (confirm('Удалить историю безвозвратно?')) moderateStory(story.id, 'delete') }} disabled={storyActionLoading === story.id} className="flex items-center gap-2 px-5 py-2 text-sm border rounded-sm ml-auto hover:bg-red-950 transition-all" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}>
-                                    <Icon name="Trash2" size={14} /> Удалить
+                                    <button onClick={() => setEditingStory(null)} className="px-4 py-1.5 text-xs border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>Отмена</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-white/50 text-sm leading-7 whitespace-pre-wrap mb-4 max-h-64 overflow-y-auto pr-2">{story.text}</div>
+                              )}
+
+                              {/* Комментарий модератора */}
+                              {story.status === 'pending' && !isEditing && (
+                                <div className="mb-4">
+                                  <textarea
+                                    className={`${smallInputClass} w-full resize-none`}
+                                    rows={2}
+                                    placeholder="Комментарий к решению (необязательно)..."
+                                    value={storyComment[story.id] || ''}
+                                    onChange={e => setStoryComment(prev => ({ ...prev, [story.id]: e.target.value }))}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Кнопки действий */}
+                              {!isEditing && (
+                                <div className="flex gap-2 flex-wrap">
+                                  {story.status === 'pending' && (
+                                    <>
+                                      <button onClick={() => moderateStory(story.id, 'approve')} disabled={storyActionLoading === story.id} className="flex items-center gap-1.5 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
+                                        {storyActionLoading === story.id ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Опубликовать
+                                      </button>
+                                      <button onClick={() => moderateStory(story.id, 'reject')} disabled={storyActionLoading === story.id} className="flex items-center gap-1.5 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>
+                                        <Icon name="X" size={12} /> Отклонить
+                                      </button>
+                                    </>
+                                  )}
+                                  <button onClick={() => { setEditingStory(story.id); setEditForm({ title: story.title, text: story.text, genre: story.genre }) }} className="flex items-center gap-1.5 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}>
+                                    <Icon name="Pencil" size={12} /> Редактировать
                                   </button>
-                                )}
-                              </div>
+                                  {isAdmin && (
+                                    <button onClick={() => { if (confirm('Удалить историю?')) moderateStory(story.id, 'delete') }} disabled={storyActionLoading === story.id} className="flex items-center gap-1.5 px-4 py-2 text-xs border rounded-sm ml-auto" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
+                                      <Icon name="Trash2" size={12} /> Удалить
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </motion.div>
                         )}
@@ -304,7 +405,7 @@ export default function Admin() {
           </>
         )}
 
-        {/* ===== ЗАЯВКИ В МОДЕРАТОРЫ (только admin) ===== */}
+        {/* ===== ЗАЯВКИ В МОДЕРАТОРЫ ===== */}
         {tab === 'moderators' && isAdmin && (
           <>
             <div className="flex gap-2 mb-6 flex-wrap">
@@ -361,15 +462,15 @@ export default function Admin() {
           </>
         )}
 
-        {/* ===== ПОЛЬЗОВАТЕЛИ (только admin) ===== */}
+        {/* ===== ПОЛЬЗОВАТЕЛИ ===== */}
         {tab === 'users' && isAdmin && (
           <>
             <div className="flex gap-2 mb-6 flex-wrap">
-              {(['pending', 'active', 'all'] as const).map(f => (
+              {(['pending', 'active', 'banned', 'all'] as const).map(f => (
                 <button key={f} onClick={() => setUserFilter(f)} className="px-4 py-1.5 text-sm border rounded-sm transition-all"
                   style={{ backgroundColor: userFilter === f ? '#8B0000' : 'transparent', borderColor: userFilter === f ? '#8B0000' : 'rgba(255,255,255,0.1)', color: userFilter === f ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-                  {{ pending: 'Ожидают', active: 'Активные', all: 'Все' }[f]}
-                  <span className="ml-2 opacity-60 text-xs">{userCounts[f]}</span>
+                  {{ pending: 'Ожидают', active: 'Активные', banned: 'Заблокированные', all: 'Все' }[f]}
+                  <span className="ml-2 opacity-60 text-xs">{userCounts[f as keyof typeof userCounts]}</span>
                 </button>
               ))}
             </div>
@@ -377,17 +478,20 @@ export default function Admin() {
             <div className="flex flex-col gap-2">
               {filteredUsers.map(u => {
                 const st = STATUS_LABEL[u.status] || STATUS_LABEL.pending
-                const isOpen = expandedStory === u.id
+                const isOpen = expandedUser === u.id
                 return (
                   <motion.div key={u.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="border rounded-sm overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    <button className="w-full text-left px-5 py-4 flex items-center justify-between gap-4" onClick={() => setExpandedStory(isOpen ? null : u.id)}>
+                    <button className="w-full text-left px-5 py-4 flex items-center justify-between gap-4" onClick={() => setExpandedUser(isOpen ? null : u.id)}>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <UserName username={u.username} name_color={(u as AppUser & {name_color?: string}).name_color} name_effect={(u as AppUser & {name_effect?: string}).name_effect} className="text-sm" />
+                          <UserName username={u.username} name_color={u.name_color} name_effect={u.name_effect} className="text-sm" />
                           <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: `${st.color}22`, color: st.color }}>{st.label}</span>
                           <span className="text-xs text-white/30">{ROLE_LABEL[u.role]}</span>
                         </div>
                         <p className="text-white/25 text-xs">{u.email}</p>
+                        {u.status === 'banned' && u.ban_reason && (
+                          <p className="text-white/30 text-xs mt-0.5 italic">Причина: {u.ban_reason}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         {u.status === 'pending' && (
@@ -400,6 +504,11 @@ export default function Admin() {
                             </button>
                           </>
                         )}
+                        {u.status === 'banned' && (
+                          <button onClick={e => { e.stopPropagation(); unbanUser(u.id) }} disabled={userActionLoading === u.id} className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm" style={{ borderColor: '#2e7d32', color: '#2e7d32' }}>
+                            <Icon name="ShieldCheck" size={12} /> Разбанить
+                          </button>
+                        )}
                         <Icon name={isOpen ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-white/20 flex-shrink-0" />
                       </div>
                     </button>
@@ -408,6 +517,7 @@ export default function Admin() {
                       {isOpen && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
                           <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+
                             {/* Роль */}
                             {u.status === 'active' && (
                               <div>
@@ -430,7 +540,7 @@ export default function Admin() {
                                   <button key={c.value} title={c.label}
                                     onClick={() => updateUser(u.id, { name_color: c.value })}
                                     className="w-6 h-6 rounded-sm border-2 transition-all flex items-center justify-center"
-                                    style={{ backgroundColor: c.value || '#333', borderColor: (u as AppUser & {name_color?: string}).name_color === c.value ? '#fff' : 'transparent' }}>
+                                    style={{ backgroundColor: c.value || '#333', borderColor: u.name_color === c.value ? '#fff' : 'transparent' }}>
                                     {!c.value && <span className="text-white/40 text-xs">A</span>}
                                   </button>
                                 ))}
@@ -441,20 +551,42 @@ export default function Admin() {
                             <div>
                               <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Эффект ника</label>
                               <div className="flex flex-wrap gap-2">
-                                {NAME_EFFECTS.map(e => (
-                                  <button key={e.value}
-                                    onClick={() => updateUser(u.id, { name_effect: e.value })}
+                                {NAME_EFFECTS.map(ef => (
+                                  <button key={ef.value}
+                                    onClick={() => updateUser(u.id, { name_effect: ef.value })}
                                     className="px-3 py-1 text-xs border rounded-sm transition-all"
                                     style={{
-                                      backgroundColor: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#8B0000' : 'transparent',
-                                      borderColor: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#8B0000' : 'rgba(255,255,255,0.1)',
-                                      color: (u as AppUser & {name_effect?: string}).name_effect === e.value ? '#fff' : 'rgba(255,255,255,0.4)',
+                                      backgroundColor: u.name_effect === ef.value ? '#8B0000' : 'transparent',
+                                      borderColor: u.name_effect === ef.value ? '#8B0000' : 'rgba(255,255,255,0.1)',
+                                      color: u.name_effect === ef.value ? '#fff' : 'rgba(255,255,255,0.4)',
                                     }}>
-                                    {e.label}
+                                    {ef.label}
                                   </button>
                                 ))}
                               </div>
                             </div>
+
+                            {/* Бан */}
+                            {u.status !== 'banned' && (
+                              <div>
+                                <label className="block text-white/25 text-xs uppercase tracking-wider mb-2">Заблокировать</label>
+                                <div className="flex gap-2">
+                                  <input
+                                    className={`${smallInputClass} flex-1`}
+                                    placeholder="Причина блокировки..."
+                                    value={banReason[u.id] || ''}
+                                    onChange={e => setBanReason(prev => ({ ...prev, [u.id]: e.target.value }))}
+                                  />
+                                  <button
+                                    onClick={() => banUser(u.id)}
+                                    disabled={!banReason[u.id]?.trim() || userActionLoading === u.id}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs border rounded-sm"
+                                    style={{ borderColor: '#8B0000', color: '#8B0000', opacity: !banReason[u.id]?.trim() ? 0.4 : 1 }}>
+                                    {userActionLoading === u.id ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Ban" size={12} />} Бан
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                       )}
@@ -463,6 +595,82 @@ export default function Admin() {
                 )
               })}
             </div>
+          </>
+        )}
+
+        {/* ===== СТАТИСТИКА ===== */}
+        {tab === 'stats' && isAdmin && (
+          <>
+            {statsLoading && <div className="py-16 flex justify-center"><Icon name="Loader" size={20} className="text-white/30 animate-spin" /></div>}
+            {!statsLoading && stats && (
+              <div className="space-y-8">
+                {/* Итоги */}
+                <div>
+                  <p className="text-white/30 text-xs uppercase tracking-widest mb-4">Общие показатели</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: 'На модерации', value: stats.totals.pending, color: '#b8860b' },
+                      { label: 'Опубликовано', value: stats.totals.approved, color: '#2e7d32' },
+                      { label: 'Отклонено', value: stats.totals.rejected, color: '#8B0000' },
+                      { label: 'Всего', value: stats.totals.total, color: 'rgba(255,255,255,0.4)' },
+                    ].map(item => (
+                      <div key={item.label} className="p-4 rounded-sm text-center" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <p className="text-2xl font-bold mb-1" style={{ color: item.color }}>{item.value}</p>
+                        <p className="text-white/35 text-xs">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Работа модераторов */}
+                {stats.moderators.length > 0 && (
+                  <div>
+                    <p className="text-white/30 text-xs uppercase tracking-widest mb-4">Активность модераторов</p>
+                    <div className="flex flex-col gap-2">
+                      {stats.moderators.map(m => (
+                        <div key={m.username} className="flex items-center justify-between px-4 py-3 rounded-sm" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div>
+                            <span className="text-white/70 text-sm">{m.username}</span>
+                            <span className="ml-2 text-xs text-white/25">{ROLE_LABEL[m.role]}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs">
+                            <span style={{ color: '#2e7d32' }}>+{m.approved} одобрено</span>
+                            <span style={{ color: '#8B0000' }}>−{m.rejected} отклонено</span>
+                            {m.last_action && <span className="text-white/20">{new Date(m.last_action).toLocaleDateString('ru-RU')}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Поступление историй */}
+                {stats.by_day.length > 0 && (
+                  <div>
+                    <p className="text-white/30 text-xs uppercase tracking-widest mb-4">Поступление за 30 дней</p>
+                    <div className="flex items-end gap-1 h-24">
+                      {stats.by_day.map(d => {
+                        const max = Math.max(...stats.by_day.map(x => x.count))
+                        const pct = max > 0 ? (d.count / max) * 100 : 0
+                        return (
+                          <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group" title={`${d.date}: ${d.count}`}>
+                            <div className="w-full rounded-sm transition-all" style={{ height: `${Math.max(4, pct)}%`, backgroundColor: '#8B0000', opacity: 0.6 }} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex justify-between text-white/15 text-xs mt-1">
+                      <span>{stats.by_day[0]?.date}</span>
+                      <span>{stats.by_day[stats.by_day.length - 1]?.date}</span>
+                    </div>
+                  </div>
+                )}
+
+                <button onClick={loadStats} className="flex items-center gap-2 text-white/25 hover:text-white transition-colors text-xs">
+                  <Icon name="RefreshCw" size={12} /> Обновить статистику
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>

@@ -234,6 +234,12 @@ def handler(event: dict, context) -> dict:
             if status == 'rejected':
                 cur.close(); conn.close()
                 return err('Твоя заявка была отклонена')
+            if status == 'banned':
+                cur.execute(f"SELECT ban_reason FROM {SCHEMA}.users WHERE id = %s", (user_id,))
+                ban_row = cur.fetchone()
+                reason = ban_row[0] if ban_row and ban_row[0] else 'нарушение правил'
+                cur.close(); conn.close()
+                return err(f'Аккаунт заблокирован. Причина: {reason}')
             sid = secrets.token_hex(32)
             cur.execute(f"INSERT INTO {SCHEMA}.sessions (id, user_id, expires_at) VALUES (%s, %s, %s)", (sid, user_id, datetime.now() + timedelta(days=30)))
             conn.commit(); cur.close(); conn.close()
@@ -387,6 +393,51 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             cur.close(); conn.close()
             return ok({'success': True, 'name_color': row[0] or '' if row else '', 'name_effect': row[1] or '' if row else ''})
+
+        # Бан пользователя с причиной (только admin)
+        if action == 'ban_user':
+            actor = get_user_by_session(cur, session_id) if session_id else None
+            is_admin_key = ADMIN_KEY and admin_key == ADMIN_KEY
+            if not is_admin_key and (not actor or actor['role'] != 'admin'):
+                cur.close(); conn.close()
+                return err('Нет доступа', 403)
+            target_id = body.get('id')
+            ban_reason = (body.get('reason') or '').strip()
+            if not target_id:
+                cur.close(); conn.close()
+                return err('Укажи id пользователя')
+            if not ban_reason:
+                cur.close(); conn.close()
+                return err('Укажи причину бана')
+            actor_id = actor['id'] if actor else None
+            cur.execute(
+                f"UPDATE {SCHEMA}.users SET status = 'banned', ban_reason = %s, banned_by = %s, banned_at = NOW() WHERE id = %s RETURNING id",
+                (ban_reason, actor_id, target_id)
+            )
+            if cur.rowcount == 0:
+                conn.rollback(); cur.close(); conn.close()
+                return err('Пользователь не найден', 404)
+            cur.execute(f"UPDATE {SCHEMA}.sessions SET expires_at = NOW() WHERE user_id = %s", (target_id,))
+            conn.commit(); cur.close(); conn.close()
+            return ok({'success': True})
+
+        # Разбан пользователя (только admin)
+        if action == 'unban_user':
+            actor = get_user_by_session(cur, session_id) if session_id else None
+            is_admin_key = ADMIN_KEY and admin_key == ADMIN_KEY
+            if not is_admin_key and (not actor or actor['role'] != 'admin'):
+                cur.close(); conn.close()
+                return err('Нет доступа', 403)
+            target_id = body.get('id')
+            if not target_id:
+                cur.close(); conn.close()
+                return err('Укажи id пользователя')
+            cur.execute(
+                f"UPDATE {SCHEMA}.users SET status = 'active', ban_reason = NULL, banned_by = NULL, banned_at = NULL WHERE id = %s RETURNING id",
+                (target_id,)
+            )
+            conn.commit(); cur.close(); conn.close()
+            return ok({'success': True})
 
         # Отправить сообщение в общий чат
         if action == 'chat_send':

@@ -1,0 +1,9 @@
+ALTER TABLE t_p9569594_nex_gen_app.story_submissions
+  ADD COLUMN IF NOT EXISTS moderator_comment TEXT,
+  ADD COLUMN IF NOT EXISTS moderated_by INTEGER REFERENCES t_p9569594_nex_gen_app.users(id),
+  ADD COLUMN IF NOT EXISTS moderated_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE t_p9569594_nex_gen_app.users
+  ADD COLUMN IF NOT EXISTS ban_reason TEXT,
+  ADD COLUMN IF NOT EXISTS banned_by INTEGER REFERENCES t_p9569594_nex_gen_app.users(id),
+  ADD COLUMN IF NOT EXISTS banned_at TIMESTAMP WITH TIME ZONE;

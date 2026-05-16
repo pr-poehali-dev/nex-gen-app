@@ -13,6 +13,12 @@
       "expectedStatus": 401,
       "expectedBody": {"error": "Нет доступа"},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Статистика без ключа — 401",
+      "method": "GET",
+      "path": "/?action=stats",
+      "expectedStatus": 401
     }
   ]
 }
