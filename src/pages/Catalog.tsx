@@ -8,7 +8,7 @@ import ChatPanel from '@/components/ui/ChatPanel'
 const GENRES = ['Все', 'Хоррор', 'Мистика', 'Психологический триллер', 'Крипипаста']
 const API_URL = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
 
-type SortKey = 'newest' | 'oldest' | 'popular' | 'shortest' | 'longest'
+type SortKey = 'newest' | 'oldest' | 'popular' | 'liked' | 'shortest' | 'longest'
 
 interface Story {
   id: number
@@ -18,6 +18,7 @@ interface Story {
   text: string
   created_at: string
   views: number
+  likes: number
 }
 
 function excerpt(text: string) {
@@ -65,6 +66,7 @@ const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
   { key: 'newest',   label: 'Новые',       icon: 'CalendarDays' },
   { key: 'oldest',   label: 'Старые',      icon: 'History' },
   { key: 'popular',  label: 'Популярные',  icon: 'TrendingUp' },
+  { key: 'liked',    label: 'Любимые',     icon: 'Heart' },
   { key: 'shortest', label: 'Короткие',    icon: 'Zap' },
   { key: 'longest',  label: 'Длинные',     icon: 'BookText' },
 ]
@@ -102,6 +104,7 @@ export default function Catalog() {
       if (sort === 'newest')   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       if (sort === 'oldest')   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       if (sort === 'popular')  return b.views - a.views
+      if (sort === 'liked')    return (b.likes || 0) - (a.likes || 0)
       if (sort === 'shortest') return wordCount(a.text) - wordCount(b.text)
       if (sort === 'longest')  return wordCount(b.text) - wordCount(a.text)
       return 0
@@ -303,6 +306,12 @@ export default function Catalog() {
                         <span className="flex items-center gap-1">
                           <Icon name="Eye" size={12} />
                           {story.views.toLocaleString('ru-RU')}
+                        </span>
+                      )}
+                      {(story.likes || 0) > 0 && (
+                        <span className="flex items-center gap-1" style={{ color: '#8B0000' }}>
+                          <Icon name="Heart" size={12} />
+                          {story.likes}
                         </span>
                       )}
                     </div>
