@@ -12,12 +12,6 @@ const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   admin:     { label: 'Администратор', color: '#8B0000' },
 }
 
-const GENRES: Record<string, string> = {
-  'Хоррор': '🩸',
-  'Мистика': '👁',
-  'Психологический триллер': '🕷',
-  'Крипипаста': '📡',
-}
 
 interface ProfileData {
   id: number
@@ -73,8 +67,6 @@ export default function Profile() {
 
   const baseBadge = ROLE_BADGE[profile.role] || ROLE_BADGE.user
   const badge = { label: profile.custom_role || baseBadge.label, color: baseBadge.color }
-  const genreIcon = GENRES[profile.favorite_genre] || null
-
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.15) 0%, transparent 60%)' }} />
@@ -145,8 +137,7 @@ export default function Profile() {
 
           {/* Любимый жанр */}
           {profile.favorite_genre && (
-            <div className="border rounded-sm px-5 py-4 flex items-center gap-4" style={{ borderColor: 'rgba(139,0,0,0.2)', backgroundColor: 'rgba(139,0,0,0.05)' }}>
-              <div className="text-2xl">{genreIcon}</div>
+            <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(139,0,0,0.2)', backgroundColor: 'rgba(139,0,0,0.05)' }}>
               <div>
                 <p className="text-white/25 text-xs uppercase tracking-wider mb-0.5">Любимый жанр</p>
                 <p className="text-white/70 text-sm">{profile.favorite_genre}</p>
