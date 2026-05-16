@@ -246,6 +246,35 @@ export default function About() {
           </div>
         </motion.div>
 
+        {/* Анонсы */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.32 }}
+          className="mb-16 grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
+          <div
+            className="p-5 rounded"
+            style={{ backgroundColor: 'rgba(139,0,0,0.06)', border: '1px solid rgba(139,0,0,0.2)' }}
+          >
+            <p className="text-[#8B0000] text-xs uppercase tracking-widest mb-2">Набор открыт</p>
+            <p className="text-white/75 text-sm font-medium mb-1">Ищем модераторов</p>
+            <p className="text-white/40 text-xs leading-relaxed">
+              Мы набираем команду модераторов — людей, которые любят жанр и готовы помогать развивать площадку. Если интересно — зарегистрируйся и подай заявку.
+            </p>
+          </div>
+          <div
+            className="p-5 rounded"
+            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <p className="text-white/30 text-xs uppercase tracking-widest mb-2">Для первых авторов</p>
+            <p className="text-white/75 text-sm font-medium mb-1">Секретный бонус</p>
+            <p className="text-white/40 text-xs leading-relaxed">
+              Первые авторы, чьи истории будут опубликованы, получат особый бонус. Что именно — узнаешь после публикации.
+            </p>
+          </div>
+        </motion.div>
+
         {/* FAQ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
