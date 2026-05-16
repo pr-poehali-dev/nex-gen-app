@@ -147,7 +147,13 @@ export default function ChatPanel() {
                 {messages.map(msg => {
                   const isOwn = currentUser?.username === msg.username
                   return (
-                    <div key={msg.id} className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}>
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}
+                    >
                       {/* Аватар */}
                       <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(139,0,0,0.2)' }}>
                         {msg.avatar_url
@@ -172,7 +178,7 @@ export default function ChatPanel() {
                           {msg.text}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
                 <div ref={bottomRef} />

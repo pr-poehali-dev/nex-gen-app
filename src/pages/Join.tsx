@@ -59,7 +59,7 @@ export default function Join() {
       <main className="max-w-2xl mx-auto px-6 md:px-8 py-14">
         {status === 'success' ? (
           <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16">
-            <div className="text-5xl mb-6">🕯️</div>
+            <div className="w-10 h-px mx-auto mb-8" style={{ backgroundColor: '#8B0000' }} />
             <h2 className="text-2xl text-white mb-3" style={{ fontFamily: "'Cinzel Decorative', serif" }}>Заявка отправлена</h2>
             <p className="text-white/40 text-sm mb-8">Мы рассмотрим её и свяжемся с тобой.</p>
             <button onClick={() => navigate('/catalog')} className="text-[#8B0000] hover:text-red-400 transition-colors text-sm flex items-center gap-2 mx-auto">

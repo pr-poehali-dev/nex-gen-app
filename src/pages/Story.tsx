@@ -79,6 +79,7 @@ export default function Story() {
   const [deletingComment, setDeletingComment] = useState<number | null>(null)
   const [reportingComment, setReportingComment] = useState<number | null>(null)
   const [reportedComments, setReportedComments] = useState<Set<number>>(new Set())
+  const [related, setRelated] = useState<{ id: number; title: string; author_name: string; text: string; genre: string }[]>([])
 
   useEffect(() => {
     fetch(`${API_URL}?id=${id}`, { headers: sid ? { 'X-Session-Id': sid } : {} })
@@ -97,6 +98,17 @@ export default function Story() {
     fetch(`${API_URL}?comments=${id}`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setComments(data) })
+      .catch(() => {})
+
+    // Загружаем список для похожих историй
+    fetch(API_URL)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Фильтруем позже когда узнаем жанр текущей
+          setRelated(data.filter((s: { id: number }) => String(s.id) !== String(id)))
+        }
+      })
       .catch(() => {})
   }, [id])
 
@@ -416,6 +428,58 @@ export default function Story() {
             </form>
           )}
         </div>
+
+        {/* Похожие истории */}
+        {(() => {
+          const sameGenre = related.filter(s => s.genre === story.genre).slice(0, 3)
+          const fallback = sameGenre.length < 3
+            ? related.filter(s => s.genre !== story.genre).slice(0, 3 - sameGenre.length)
+            : []
+          const suggestions = [...sameGenre, ...fallback]
+          if (suggestions.length === 0) return null
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-16 pt-10 border-t"
+              style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+            >
+              <p className="text-white/30 text-xs uppercase tracking-widest mb-6 flex items-center gap-2">
+                <Icon name="BookOpen" size={12} />
+                Читать дальше
+              </p>
+              <div className="flex flex-col gap-3">
+                {suggestions.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => { navigate(`/story/${s.id}`); window.scrollTo(0, 0) }}
+                    className="group text-left py-4 border-b transition-colors"
+                    style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[10px] px-1.5 py-0.5 border rounded-sm flex-shrink-0"
+                            style={{ borderColor: '#8B0000', color: '#8B0000' }}>
+                            {s.genre}
+                          </span>
+                        </div>
+                        <p className="text-white/70 group-hover:text-red-400 transition-colors text-sm truncate"
+                          style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+                          {s.title}
+                        </p>
+                        <p className="text-white/25 text-xs mt-0.5">{s.author_name}</p>
+                      </div>
+                      <Icon name="ChevronRight" size={16}
+                        className="text-white/15 group-hover:text-[#8B0000] transition-colors flex-shrink-0 mt-1" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )
+        })()}
       </main>
     </div>
   )
