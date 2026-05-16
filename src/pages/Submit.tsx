@@ -98,7 +98,6 @@ export default function Submit() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-16"
             >
-              <div className="text-5xl mb-6">🕯️</div>
               <h2
                 className="text-2xl text-white mb-3"
                 style={{ fontFamily: "'Cinzel Decorative', serif" }}
