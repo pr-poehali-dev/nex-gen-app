@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Icon from '@/components/ui/icon'
 import { fetchMe, logout, getSessionId, AUTH_URL, User } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
 import UserBadge from '@/components/ui/UserBadge'
 import { getLevelByReads } from '@/lib/levels'
+
+const STORIES_API = 'https://functions.poehali.dev/e26b6cce-8804-469e-a6e7-57e201e0f4ab'
+
+interface BookmarkedStory {
+  id: number; title: string; author_name: string; genre: string
+  text: string; created_at: string; views: number
+}
+interface LeaderboardEntry {
+  author_name: string; stories_count: number; total_views: number; total_likes: number
+}
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
   user:      { label: 'Читатель',      color: '#555' },
@@ -45,7 +55,30 @@ export default function Account() {
   const [favGenre, setFavGenre] = useState('')
   const [saving, setSaving] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'profile' | 'bookmarks' | 'leaderboard'>('profile')
+  const [bookmarks, setBookmarks] = useState<BookmarkedStory[]>([])
+  const [bookmarksLoading, setBookmarksLoading] = useState(false)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
 
+  const loadBookmarks = async () => {
+    setBookmarksLoading(true)
+    const res = await fetch(`${STORIES_API}?bookmarks=1`, { headers: { 'X-Session-Id': sid } })
+    if (res.ok) { const d = await res.json(); setBookmarks(Array.isArray(d) ? d : []) }
+    setBookmarksLoading(false)
+  }
+
+  const loadLeaderboard = async () => {
+    setLeaderboardLoading(true)
+    const res = await fetch(`${STORIES_API}?leaderboard=1`)
+    if (res.ok) { const d = await res.json(); setLeaderboard(Array.isArray(d) ? d : []) }
+    setLeaderboardLoading(false)
+  }
+
+  useEffect(() => {
+    if (activeTab === 'bookmarks' && bookmarks.length === 0) loadBookmarks()
+    if (activeTab === 'leaderboard' && leaderboard.length === 0) loadLeaderboard()
+  }, [activeTab])
 
   useEffect(() => {
     fetchMe().then(u => {
@@ -217,34 +250,105 @@ export default function Account() {
             </div>
           )}
 
-          {/* Уровень (для обычных пользователей) */}
-          {user.role === 'user' && (
-            <div className="border rounded-sm px-5 py-4 mb-6 flex items-center gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              <div className="flex-1">
-                <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
-                <UserName username={user.username} stories_read={user.stories_read} className="text-base" />
-                <p className="text-white/20 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
-              </div>
-            </div>
-          )}
-
-
-          {/* Действия */}
-          <div className="space-y-2">
-            {(user.role === 'admin' || user.role === 'moderator') && (
-              <button onClick={() => navigate('/admin')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-                <span className="flex items-center gap-3"><Icon name="Shield" size={15} className="text-[#8B0000]" /> Панель модерации</span>
-                <Icon name="ChevronRight" size={15} className="text-white/20" />
+          {/* Вкладки */}
+          <div className="flex border-b mb-6" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            {([
+              { id: 'profile', label: 'Профиль', icon: 'User' },
+              { id: 'bookmarks', label: 'Закладки', icon: 'Bookmark' },
+              { id: 'leaderboard', label: 'Рейтинг', icon: 'TrendingUp' },
+            ] as const).map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs border-b-2 -mb-px transition-all whitespace-nowrap"
+                style={{ borderColor: activeTab === t.id ? '#8B0000' : 'transparent', color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,0.35)' }}>
+                <Icon name={t.icon} size={12} /> {t.label}
               </button>
-            )}
-            <button onClick={() => navigate('/submit')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-              <span className="flex items-center gap-3"><Icon name="PenLine" size={15} className="text-[#8B0000]" /> Предложить историю</span>
-              <Icon name="ChevronRight" size={15} className="text-white/20" />
-            </button>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 border rounded-sm transition-all text-sm mt-4" style={{ borderColor: 'rgba(139,0,0,0.2)', color: 'rgba(139,0,0,0.6)' }}>
-              <Icon name="LogOut" size={15} /> Выйти из аккаунта
-            </button>
+            ))}
           </div>
+
+          <AnimatePresence mode="wait">
+            {activeTab === 'profile' && (
+              <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                {/* Уровень (для обычных пользователей) */}
+                {user.role === 'user' && (
+                  <div className="border rounded-sm px-5 py-4 mb-6 flex items-center gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <div className="flex-1">
+                      <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
+                      <UserName username={user.username} stories_read={user.stories_read} className="text-base" />
+                      <p className="text-white/20 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
+                    </div>
+                  </div>
+                )}
+                {/* Действия */}
+                <div className="space-y-2">
+                  {(user.role === 'admin' || user.role === 'moderator') && (
+                    <button onClick={() => navigate('/admin')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+                      <span className="flex items-center gap-3"><Icon name="Shield" size={15} className="text-[#8B0000]" /> Панель модерации</span>
+                      <Icon name="ChevronRight" size={15} className="text-white/20" />
+                    </button>
+                  )}
+                  <button onClick={() => navigate('/submit')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+                    <span className="flex items-center gap-3"><Icon name="PenLine" size={15} className="text-[#8B0000]" /> Предложить историю</span>
+                    <Icon name="ChevronRight" size={15} className="text-white/20" />
+                  </button>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 border rounded-sm transition-all text-sm mt-4" style={{ borderColor: 'rgba(139,0,0,0.2)', color: 'rgba(139,0,0,0.6)' }}>
+                    <Icon name="LogOut" size={15} /> Выйти из аккаунта
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'bookmarks' && (
+              <motion.div key="bookmarks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                {bookmarksLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-white/20 animate-spin" /></div>}
+                {!bookmarksLoading && bookmarks.length === 0 && (
+                  <div className="py-10 text-center">
+                    <Icon name="BookmarkX" size={24} className="mx-auto mb-3 text-white/15" />
+                    <p className="text-white/25 text-sm">Закладок пока нет</p>
+                    <button onClick={() => navigate('/catalog')} className="mt-3 text-xs text-[#8B0000] hover:text-red-400 transition-colors">Перейти в каталог</button>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {bookmarks.map(s => (
+                    <button key={s.id} onClick={() => navigate(`/story/${s.id}`)}
+                      className="w-full text-left p-4 border rounded-sm transition-all hover:border-white/15 group"
+                      style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] px-1.5 py-0.5 border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>{s.genre}</span>
+                      </div>
+                      <p className="text-white/80 text-sm group-hover:text-red-400 transition-colors mb-1 truncate" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{s.title}</p>
+                      <p className="text-white/30 text-xs">{s.author_name}</p>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'leaderboard' && (
+              <motion.div key="leaderboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                {leaderboardLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-white/20 animate-spin" /></div>}
+                <div className="space-y-2">
+                  {leaderboard.map((entry, i) => (
+                    <div key={entry.author_name} className="flex items-center gap-4 px-4 py-3 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <span className="text-white/20 text-sm w-5 text-right flex-shrink-0"
+                        style={{ color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : undefined }}>
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/75 text-sm truncate">{entry.author_name}</p>
+                        <p className="text-white/25 text-xs">{entry.stories_count} {entry.stories_count === 1 ? 'история' : 'историй'}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-white/30 flex-shrink-0">
+                        <span className="flex items-center gap-1"><Icon name="Heart" size={11} style={{ color: entry.total_likes > 0 ? '#8B0000' : undefined }} />{entry.total_likes}</span>
+                        <span className="flex items-center gap-1"><Icon name="Eye" size={11} />{entry.total_views}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+
 
         </motion.div>
       </main>
