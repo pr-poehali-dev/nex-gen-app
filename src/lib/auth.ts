@@ -38,12 +38,18 @@ export async function fetchMe(): Promise<User | null> {
     const res = await fetch(`${AUTH_URL}?action=me`, {
       headers: { 'X-Session-Id': sid },
     })
-    if (!res.ok) { clearSession(); return null }
+    if (!res.ok) {
+      // Сервер ответил 401/403 — сессия недействительна, чистим
+      if (res.status === 401 || res.status === 403) { clearSession(); return null }
+      // Другая ошибка сервера — возвращаем кэш, не разлогиниваем
+      return getCachedUser()
+    }
     const user = await res.json()
     localStorage.setItem('user', JSON.stringify(user))
     return user
   } catch {
-    return null
+    // Сеть недоступна — возвращаем кэш, не разлогиниваем
+    return getCachedUser()
   }
 }
 

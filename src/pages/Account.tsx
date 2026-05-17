@@ -81,11 +81,18 @@ export default function Account() {
   }, [activeTab])
 
   useEffect(() => {
+    const cached = getCachedUser()
+    if (cached) {
+      setUser(cached)
+      setBio((cached as any).bio || '')
+      setFavGenre((cached as any).favorite_genre || '')
+      setLoading(false)
+    }
     fetchMe().then(u => {
-      if (!u) { navigate('/login'); return }
+      if (!u) { if (!cached) navigate('/login'); return }
       setUser(u)
-      setBio(u.bio || '')
-      setFavGenre(u.favorite_genre || '')
+      setBio((u as any).bio || '')
+      setFavGenre((u as any).favorite_genre || '')
       setLoading(false)
     })
   }, [])
