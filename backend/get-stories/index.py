@@ -235,18 +235,33 @@ def handler(event: dict, context) -> dict:
         cur.close(); conn.close()
         return ok({'id': row[0], 'title': row[1], 'author_name': row[2], 'genre': row[3], 'text': row[4], 'created_at': str(row[5]), 'likes_count': likes_count, 'liked': liked, 'bookmarked': bookmarked})
 
-    # GET список историй
-    cur.execute(f"""
-        SELECT s.id, s.title, s.author_name, s.genre, s.text, s.created_at,
-               COUNT(DISTINCT v.id) AS views,
-               COUNT(DISTINCT l.id) AS likes
-        FROM {SCHEMA}.story_submissions s
-        LEFT JOIN {SCHEMA}.story_views v ON v.story_id = s.id
-        LEFT JOIN {SCHEMA}.story_likes l ON l.story_id = s.id
-        WHERE s.status = 'approved'
-        GROUP BY s.id
-        ORDER BY s.created_at DESC
-    """)
+    # GET список историй (с опциональным фильтром по жанру)
+    genre_filter = params.get('genre')
+    if genre_filter:
+        cur.execute(f"""
+            SELECT s.id, s.title, s.author_name, s.genre, s.text, s.created_at,
+                   COUNT(DISTINCT v.id) AS views,
+                   COUNT(DISTINCT l.id) AS likes
+            FROM {SCHEMA}.story_submissions s
+            LEFT JOIN {SCHEMA}.story_views v ON v.story_id = s.id
+            LEFT JOIN {SCHEMA}.story_likes l ON l.story_id = s.id
+            WHERE s.status = 'approved' AND s.genre = %s
+            GROUP BY s.id
+            ORDER BY s.created_at DESC
+            LIMIT 10
+        """, (genre_filter,))
+    else:
+        cur.execute(f"""
+            SELECT s.id, s.title, s.author_name, s.genre, s.text, s.created_at,
+                   COUNT(DISTINCT v.id) AS views,
+                   COUNT(DISTINCT l.id) AS likes
+            FROM {SCHEMA}.story_submissions s
+            LEFT JOIN {SCHEMA}.story_views v ON v.story_id = s.id
+            LEFT JOIN {SCHEMA}.story_likes l ON l.story_id = s.id
+            WHERE s.status = 'approved'
+            GROUP BY s.id
+            ORDER BY s.created_at DESC
+        """)
     rows = cur.fetchall()
     cur.close(); conn.close()
     return ok([{'id': r[0], 'title': r[1], 'author_name': r[2], 'genre': r[3], 'text': r[4], 'created_at': str(r[5]), 'views': r[6], 'likes': r[7]} for r in rows])

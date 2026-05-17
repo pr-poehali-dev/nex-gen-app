@@ -11,18 +11,25 @@ export default function LandingPage() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
-      if (containerRef.current) {
-        const scrollPosition = containerRef.current.scrollTop
-        const windowHeight = window.innerHeight
-        const newActiveSection = Math.floor(scrollPosition / windowHeight)
-        setActiveSection(newActiveSection)
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (containerRef.current) {
+            const scrollPosition = containerRef.current.scrollTop
+            const windowHeight = window.innerHeight
+            const newActiveSection = Math.floor(scrollPosition / windowHeight)
+            setActiveSection(newActiveSection)
+          }
+          ticking = false
+        })
+        ticking = true
       }
     }
 
     const container = containerRef.current
     if (container) {
-      container.addEventListener('scroll', handleScroll)
+      container.addEventListener('scroll', handleScroll, { passive: true })
     }
 
     return () => {

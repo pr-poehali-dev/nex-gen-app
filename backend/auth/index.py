@@ -114,69 +114,6 @@ def handler(event: dict, context) -> dict:
             **stats
         })
 
-    # GET список диалогов
-    if method == 'GET' and action == 'messages_list':
-        user = get_user_by_session(cur, session_id) if session_id else None
-        if not user:
-            cur.close(); conn.close()
-            return err('Необходима авторизация', 401)
-        uid = user['id']
-        cur.execute(f"""
-            SELECT
-                CASE WHEN m.from_user_id = %s THEN m.to_user_id ELSE m.from_user_id END AS partner_id,
-                u.username AS partner_username,
-                u.avatar_url AS partner_avatar,
-                u.name_color, u.name_effect,
-                MAX(m.created_at) AS last_at,
-                (SELECT text FROM {SCHEMA}.messages
-                 WHERE (from_user_id = %s AND to_user_id = partner_id)
-                    OR (from_user_id = partner_id AND to_user_id = %s)
-                 ORDER BY created_at DESC LIMIT 1) AS last_text,
-                COUNT(CASE WHEN m.to_user_id = %s AND m.is_read = FALSE THEN 1 END) AS unread
-            FROM {SCHEMA}.messages m
-            JOIN {SCHEMA}.users u ON u.id = CASE WHEN m.from_user_id = %s THEN m.to_user_id ELSE m.from_user_id END
-            WHERE m.from_user_id = %s OR m.to_user_id = %s
-            GROUP BY partner_id, u.username, u.avatar_url, u.name_color, u.name_effect
-            ORDER BY last_at DESC
-        """, (uid, uid, uid, uid, uid, uid, uid))
-        rows = cur.fetchall()
-        cur.close(); conn.close()
-        return ok([{
-            'partner_id': r[0], 'partner_username': r[1], 'partner_avatar': r[2] or '',
-            'name_color': r[3] or '', 'name_effect': r[4] or '',
-            'last_at': str(r[5]), 'last_text': r[6] or '', 'unread': r[7]
-        } for r in rows])
-
-    # GET сообщения с конкретным пользователем
-    if method == 'GET' and action == 'messages_chat':
-        user = get_user_by_session(cur, session_id) if session_id else None
-        if not user:
-            cur.close(); conn.close()
-            return err('Необходима авторизация', 401)
-        with_id = params.get('with')
-        if not with_id:
-            cur.close(); conn.close()
-            return err('Укажи with')
-        uid = user['id']
-        cur.execute(f"""
-            SELECT id, from_user_id, to_user_id, text, is_read, created_at
-            FROM {SCHEMA}.messages
-            WHERE (from_user_id = %s AND to_user_id = %s)
-               OR (from_user_id = %s AND to_user_id = %s)
-            ORDER BY created_at ASC
-        """, (uid, with_id, with_id, uid))
-        rows = cur.fetchall()
-        # Получаем инфо о собеседнике
-        cur.execute(f"SELECT id, username, avatar_url, role, name_color, name_effect FROM {SCHEMA}.users WHERE id = %s", (with_id,))
-        p = cur.fetchone()
-        cur.close(); conn.close()
-        if not p:
-            return err('Пользователь не найден', 404)
-        return ok({
-            'partner': {'id': p[0], 'username': p[1], 'avatar_url': p[2] or '', 'role': p[3], 'name_color': p[4] or '', 'name_effect': p[5] or ''},
-            'messages': [{'id': r[0], 'from_user_id': r[1], 'to_user_id': r[2], 'text': r[3], 'is_read': r[4], 'created_at': str(r[5])} for r in rows]
-        })
-
     # GET список пользователей (только admin)
     if method == 'GET' and action == 'users':
         user = get_user_by_session(cur, session_id) if session_id else None

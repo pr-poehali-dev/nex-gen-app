@@ -53,9 +53,10 @@ export default function ChatPanel() {
 
   useEffect(() => {
     fetchMessages()
+    if (!open) return
     pollRef.current = setInterval(fetchMessages, 30000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [fetchMessages])
+  }, [open, fetchMessages])
 
   useEffect(() => {
     if (open) {

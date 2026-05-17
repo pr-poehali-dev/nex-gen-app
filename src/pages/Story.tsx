@@ -91,6 +91,17 @@ export default function Story() {
           setLikesCount(data.likes_count || 0)
           setBookmarked(data.bookmarked || false)
           setLoading(false)
+          // Загружаем похожие только после получения жанра
+          if (data.genre) {
+            fetch(`${API_URL}?genre=${encodeURIComponent(data.genre)}`)
+              .then(r => r.json())
+              .then(list => {
+                if (Array.isArray(list)) {
+                  setRelated(list.filter((s: { id: number }) => String(s.id) !== String(id)))
+                }
+              })
+              .catch(() => {})
+          }
         }
       })
       .catch(() => { setNotFound(true); setLoading(false) })
@@ -98,17 +109,6 @@ export default function Story() {
     fetch(`${API_URL}?comments=${id}`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setComments(data) })
-      .catch(() => {})
-
-    // Загружаем список для похожих историй
-    fetch(API_URL)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          // Фильтруем позже когда узнаем жанр текущей
-          setRelated(data.filter((s: { id: number }) => String(s.id) !== String(id)))
-        }
-      })
       .catch(() => {})
   }, [id])
 

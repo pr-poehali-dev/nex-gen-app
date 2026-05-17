@@ -83,15 +83,10 @@ export default function Account() {
   useEffect(() => {
     fetchMe().then(u => {
       if (!u) { navigate('/login'); return }
-      fetch(`${AUTH_URL}?action=me`, { headers: { 'X-Session-Id': sid } })
-        .then(r => r.json())
-        .then(data => {
-          const parsed = typeof data === 'string' ? JSON.parse(data) : data
-          setUser(parsed)
-          setBio(parsed.bio || '')
-          setFavGenre(parsed.favorite_genre || '')
-          setLoading(false)
-        })
+      setUser(u)
+      setBio(u.bio || '')
+      setFavGenre(u.favorite_genre || '')
+      setLoading(false)
     })
   }, [])
 
