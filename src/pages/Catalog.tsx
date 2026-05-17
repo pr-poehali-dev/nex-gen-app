@@ -156,6 +156,13 @@ export default function Catalog() {
         </div>
       </header>
 
+      <div className="max-w-3xl mx-auto px-4 md:px-12 pt-4">
+        <div className="flex items-start gap-3 px-4 py-3 rounded-sm border text-sm" style={{ backgroundColor: 'rgba(139,0,0,0.08)', borderColor: 'rgba(139,0,0,0.3)', color: 'rgba(255,255,255,0.6)' }}>
+          <span style={{ color: '#8B0000', flexShrink: 0 }}>⚠</span>
+          <span>Мы испытываем технические трудности на стороне площадки. Работаем над устранением. Приносим извинения за неудобства.</span>
+        </div>
+      </div>
+
       <main className="max-w-3xl mx-auto px-4 md:px-12 py-8 md:py-12">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-8 md:mb-10">
           <div className="flex items-start justify-between gap-4">
