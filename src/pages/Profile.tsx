@@ -7,11 +7,10 @@ import UserName from '@/components/ui/UserName'
 import UserBadge from '@/components/ui/UserBadge'
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
-  user:      { label: 'Читатель',      color: '#555' },
-  moderator: { label: 'Модератор',     color: '#b8860b' },
-  admin:     { label: 'Администратор', color: '#8B0000' },
+  user:      { label: 'Читатель',      color: '#3b82f6' },
+  moderator: { label: 'Модератор',     color: '#d97706' },
+  admin:     { label: 'Администратор', color: '#7c3aed' },
 }
-
 
 interface ProfileData {
   id: number
@@ -51,46 +50,44 @@ export default function Profile() {
   }, [username])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
-      <Icon name="Loader" size={16} className="text-white/20 animate-spin" />
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <Icon name="Loader" size={16} className="text-zinc-300 animate-spin" />
     </div>
   )
 
   if (notFound || !profile) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
-        <p className="text-white/30 mb-4 text-sm">Пользователь не найден</p>
-        <button onClick={() => navigate('/catalog')} className="text-[#8B0000] hover:text-red-400 transition-colors text-sm">← Каталог</button>
+        <p className="text-zinc-400 mb-4 text-sm">Пользователь не найден</p>
+        <button onClick={() => navigate('/catalog')} className="text-blue-600 hover:text-blue-800 transition-colors text-sm">← Каталог</button>
       </div>
     </div>
   )
 
   const baseBadge = ROLE_BADGE[profile.role] || ROLE_BADGE.user
   const badge = { label: profile.custom_role || baseBadge.label, color: baseBadge.color }
-  return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.15) 0%, transparent 60%)' }} />
-      <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.2), transparent)' }} />
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm">
-          <Icon name="ArrowLeft" size={16} /> <span className="hidden sm:inline">Назад</span>
+  return (
+    <div className="min-h-screen bg-zinc-50" style={{ fontFamily: "'Inter', sans-serif" }}>
+
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 md:px-12 py-3.5 border-b border-zinc-100 bg-white/95 backdrop-blur-sm">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 transition-colors text-sm">
+          <Icon name="ArrowLeft" size={15} /> <span className="hidden sm:inline">Назад</span>
         </button>
-        <button onClick={() => navigate('/')} className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+        <button onClick={() => navigate('/')} className="text-zinc-900 text-base md:text-lg font-bold tracking-tight hover:text-blue-700 transition-colors" style={{ fontFamily: "'Playfair Display', serif" }}>
           ShadowTales
         </button>
         <div className="w-20" />
       </header>
 
-      <main className="max-w-lg mx-auto px-6 md:px-8 py-14">
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+      <main className="max-w-lg mx-auto px-5 md:px-8 py-10 md:py-14">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
 
-          {/* Шапка профиля */}
-          <div className="flex flex-col sm:flex-row items-start gap-5 mb-10 pb-10 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="w-12 h-12 md:w-16 md:h-16 rounded-sm flex-shrink-0 overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+          <div className="flex flex-col sm:flex-row items-start gap-5 mb-10 pb-10 border-b border-zinc-100">
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl flex-shrink-0 overflow-hidden border-2 border-zinc-100">
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
+                : <div className="w-full h-full flex items-center justify-center text-xl font-bold bg-blue-50 text-blue-500" style={{ fontFamily: "'Playfair Display', serif" }}>
                     {profile.username[0].toUpperCase()}
                   </div>
               }
@@ -102,46 +99,41 @@ export default function Profile() {
                 name_prefix={profile.name_prefix}
                 name_color={profile.name_color}
                 name_effect={profile.name_effect}
-                className="text-xl md:text-2xl mb-1.5 block"
-                style={{ fontFamily: "'Cinzel Decorative', serif" } as React.CSSProperties}
+                className="text-xl md:text-2xl mb-1.5 block font-semibold"
+                style={{ fontFamily: "'Playfair Display', serif" } as React.CSSProperties}
               />
               <div className="flex items-center gap-2 flex-wrap">
                 {!profile.hide_role && (
-                  <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${badge.color}18`, color: badge.color }}>
                     {badge.label}
                   </span>
                 )}
                 {profile.badge_text && <UserBadge text={profile.badge_text} effect={profile.badge_effect} />}
-                <span className="text-white/20 text-xs">с {joinDate(profile.created_at)}</span>
+                <span className="text-zinc-300 text-xs">с {joinDate(profile.created_at)}</span>
               </div>
               {profile.bio && (
-                <p className="text-white/40 text-sm mt-3 leading-6">{profile.bio}</p>
+                <p className="text-zinc-500 text-sm mt-3 leading-6">{profile.bio}</p>
               )}
-
             </div>
           </div>
 
-          {/* Статистика */}
-          <div className="grid grid-cols-2 gap-3 mb-10">
-            <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Прочитано</p>
-              <p className="text-white text-xl md:text-2xl font-light">{profile.stories_read}</p>
-              <p className="text-white/20 text-xs mt-0.5">историй</p>
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <div className="border border-zinc-100 rounded-xl px-5 py-4 bg-white">
+              <p className="text-zinc-400 text-xs uppercase tracking-wider mb-1">Прочитано</p>
+              <p className="text-zinc-900 text-xl md:text-2xl font-light">{profile.stories_read}</p>
+              <p className="text-zinc-300 text-xs mt-0.5">историй</p>
             </div>
-            <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Комментарии</p>
-              <p className="text-white text-xl md:text-2xl font-light">{profile.comments_count}</p>
-              <p className="text-white/20 text-xs mt-0.5">оставлено</p>
+            <div className="border border-zinc-100 rounded-xl px-5 py-4 bg-white">
+              <p className="text-zinc-400 text-xs uppercase tracking-wider mb-1">Комментарии</p>
+              <p className="text-zinc-900 text-xl md:text-2xl font-light">{profile.comments_count}</p>
+              <p className="text-zinc-300 text-xs mt-0.5">оставлено</p>
             </div>
           </div>
 
-          {/* Любимый жанр */}
           {profile.favorite_genre && (
-            <div className="border rounded-sm px-5 py-4" style={{ borderColor: 'rgba(139,0,0,0.2)', backgroundColor: 'rgba(139,0,0,0.05)' }}>
-              <div>
-                <p className="text-white/25 text-xs uppercase tracking-wider mb-0.5">Любимый жанр</p>
-                <p className="text-white/70 text-sm">{profile.favorite_genre}</p>
-              </div>
+            <div className="border border-blue-100 rounded-xl px-5 py-4 bg-blue-50/40">
+              <p className="text-zinc-400 text-xs uppercase tracking-wider mb-0.5">Любимый жанр</p>
+              <p className="text-zinc-700 text-sm">{profile.favorite_genre}</p>
             </div>
           )}
 

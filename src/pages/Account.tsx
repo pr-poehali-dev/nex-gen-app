@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Icon from '@/components/ui/icon'
-import { fetchMe, logout, getSessionId, AUTH_URL, User } from '@/lib/auth'
+import { fetchMe, logout, getSessionId, AUTH_URL, User, getCachedUser } from '@/lib/auth'
 import UserName from '@/components/ui/UserName'
 import UserBadge from '@/components/ui/UserBadge'
 import { getLevelByReads } from '@/lib/levels'
@@ -18,9 +18,9 @@ interface LeaderboardEntry {
 }
 
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
-  user:      { label: 'Читатель',      color: '#555' },
-  moderator: { label: 'Модератор',     color: '#b8860b' },
-  admin:     { label: 'Администратор', color: '#8B0000' },
+  user:      { label: 'Читатель',      color: '#3b82f6' },
+  moderator: { label: 'Модератор',     color: '#d97706' },
+  admin:     { label: 'Администратор', color: '#7c3aed' },
 }
 
 const GENRES = ['Хоррор', 'Мистика', 'Психологический триллер', 'Крипипаста']
@@ -83,22 +83,21 @@ export default function Account() {
   useEffect(() => {
     const cached = getCachedUser()
     if (cached) {
-      setUser(cached)
-      setBio((cached as any).bio || '')
-      setFavGenre((cached as any).favorite_genre || '')
+      setUser(cached as FullUser)
+      setBio((cached as FullUser).bio || '')
+      setFavGenre((cached as FullUser).favorite_genre || '')
       setLoading(false)
     }
     fetchMe().then(u => {
       if (!u) { if (!cached) navigate('/login'); return }
-      setUser(u)
-      setBio((u as any).bio || '')
-      setFavGenre((u as any).favorite_genre || '')
+      setUser(u as FullUser)
+      setBio((u as FullUser).bio || '')
+      setFavGenre((u as FullUser).favorite_genre || '')
       setLoading(false)
     })
-  }, [])
+  }, [navigate])
 
   const handleLogout = async () => { await logout(); navigate('/') }
-
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -134,48 +133,43 @@ export default function Account() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#080808' }}>
-      <Icon name="Loader" size={18} className="text-white/20 animate-spin" />
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <Icon name="Loader" size={18} className="text-zinc-300 animate-spin" />
     </div>
   )
   if (!user) return null
 
   const baseBadge = ROLE_BADGE[user.role] || ROLE_BADGE.user
   const badge = { label: user.custom_role || baseBadge.label, color: baseBadge.color }
-  const inputClass = "w-full bg-transparent border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20 resize-none"
+  const inputClass = "w-full bg-white border border-zinc-200 rounded-lg px-3 py-2.5 text-zinc-800 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all placeholder:text-zinc-300 resize-none"
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.15) 0%, transparent 60%)' }} />
-      <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.2), transparent)' }} />
+    <div className="min-h-screen bg-zinc-50" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-      <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-12 py-3 md:py-4 border-b border-white/5" style={{ backgroundColor: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(10px)' }}>
-        <button onClick={() => navigate('/catalog')} className="flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm">
-          <Icon name="ArrowLeft" size={16} /> Каталог
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 md:px-12 py-3.5 border-b border-zinc-100 bg-white/95 backdrop-blur-sm">
+        <button onClick={() => navigate('/catalog')} className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 transition-colors text-sm">
+          <Icon name="ArrowLeft" size={15} /> Каталог
         </button>
-        <button onClick={() => navigate('/')} className="text-white text-base md:text-lg font-bold tracking-wider hover:text-red-400 transition-colors" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+        <button onClick={() => navigate('/')} className="text-zinc-900 text-base md:text-lg font-bold tracking-tight hover:text-blue-700 transition-colors" style={{ fontFamily: "'Playfair Display', serif" }}>
           ShadowTales
         </button>
-        <button onClick={() => navigate(`/u/${user.username}`)} className="text-white/25 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
+        <button onClick={() => navigate(`/u/${user.username}`)} className="text-zinc-400 hover:text-zinc-600 transition-colors text-xs flex items-center gap-1">
           <Icon name="ExternalLink" size={13} /> Профиль
         </button>
       </header>
 
-      <main className="max-w-lg mx-auto px-6 md:px-8 py-14">
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+      <main className="max-w-lg mx-auto px-5 md:px-8 py-10 md:py-14">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
 
-          {/* Шапка */}
-          <div className="flex flex-col sm:flex-row items-start gap-5 mb-8 pb-8 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            {/* Аватар с загрузкой */}
-            <label className="relative w-12 h-12 md:w-14 md:h-14 rounded-sm flex-shrink-0 cursor-pointer group overflow-hidden" style={{ border: `1px solid ${badge.color}44` }}>
+          <div className="flex flex-col sm:flex-row items-start gap-5 mb-8 pb-8 border-b border-zinc-100">
+            <label className="relative w-14 h-14 rounded-xl flex-shrink-0 cursor-pointer group overflow-hidden border-2 border-zinc-100 hover:border-blue-200 transition-colors">
               {user.avatar_url
                 ? <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: `${badge.color}18`, fontFamily: "'Cinzel Decorative', serif", color: badge.color }}>
+                : <div className="w-full h-full flex items-center justify-center text-xl font-bold bg-blue-50 text-blue-600" style={{ fontFamily: "'Playfair Display', serif" }}>
                     {user.username[0].toUpperCase()}
                   </div>
               }
-              {/* Оверлей при наведении */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl">
                 {avatarUploading
                   ? <Icon name="Loader" size={16} className="text-white animate-spin" />
                   : <Icon name="Camera" size={16} className="text-white" />
@@ -184,76 +178,83 @@ export default function Account() {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
             </label>
             <div>
-              <h1 className="text-xl md:text-2xl text-white" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{user.username}</h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                {!user.hide_role && <span className="text-xs px-2 py-0.5 rounded-sm" style={{ backgroundColor: `${badge.color}22`, color: badge.color }}>{badge.label}</span>}
+              <h1 className="text-xl md:text-2xl text-zinc-900 font-semibold" style={{ fontFamily: "'Playfair Display', serif" }}>{user.username}</h1>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {!user.hide_role && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${badge.color}18`, color: badge.color }}>
+                    {badge.label}
+                  </span>
+                )}
                 {user.badge_text && <UserBadge text={user.badge_text} effect={user.badge_effect} />}
-                <span className="text-white/20 text-xs">с {joinDate(user.created_at)}</span>
+                <span className="text-zinc-300 text-xs">с {joinDate(user.created_at)}</span>
               </div>
-              <p className="text-white/15 text-xs mt-1.5">Нажми на фото чтобы изменить</p>
+              <p className="text-zinc-300 text-xs mt-1">Нажми на фото, чтобы изменить</p>
             </div>
           </div>
 
-          {/* Статистика */}
           <div className="grid grid-cols-2 gap-3 mb-8">
-            <div className="border rounded-sm px-3 py-3 md:px-4 md:py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-white/25 text-xs uppercase tracking-wider mb-2">Прочитано</p>
-              <p className="text-white text-2xl md:text-3xl font-light">{user.stories_read ?? 0}</p>
-              <p className="text-white/20 text-xs mt-1">историй</p>
+            <div className="border border-zinc-100 rounded-xl px-4 py-4 bg-white">
+              <p className="text-zinc-400 text-xs uppercase tracking-wider mb-2">Прочитано</p>
+              <p className="text-zinc-900 text-2xl md:text-3xl font-light">{user.stories_read ?? 0}</p>
+              <p className="text-zinc-300 text-xs mt-1">историй</p>
             </div>
-            <div className="border rounded-sm px-3 py-3 md:px-4 md:py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-white/25 text-xs uppercase tracking-wider mb-2">Комментарии</p>
-              <p className="text-white text-2xl md:text-3xl font-light">{user.comments_count ?? 0}</p>
-              <p className="text-white/20 text-xs mt-1">оставлено</p>
+            <div className="border border-zinc-100 rounded-xl px-4 py-4 bg-white">
+              <p className="text-zinc-400 text-xs uppercase tracking-wider mb-2">Комментарии</p>
+              <p className="text-zinc-900 text-2xl md:text-3xl font-light">{user.comments_count ?? 0}</p>
+              <p className="text-zinc-300 text-xs mt-1">оставлено</p>
             </div>
           </div>
 
-          {/* Профиль */}
           {editing ? (
-            <div className="border rounded-sm p-5 mb-6 space-y-5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="border border-zinc-100 rounded-xl p-5 mb-6 space-y-5 bg-white">
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-2">О себе</label>
+                <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-2">О себе</label>
                 <textarea className={inputClass} rows={3} placeholder="Пара слов о себе..." value={bio} onChange={e => setBio(e.target.value)} maxLength={300} />
-                <p className="text-white/15 text-xs mt-1 text-right">{bio.length}/300</p>
+                <p className="text-zinc-300 text-xs mt-1 text-right">{bio.length}/300</p>
               </div>
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Любимый жанр</label>
+                <label className="block text-zinc-400 text-xs uppercase tracking-wider mb-3">Любимый жанр</label>
                 <div className="flex flex-wrap gap-2">
                   {GENRES.map(g => (
                     <button key={g} type="button" onClick={() => setFavGenre(favGenre === g ? '' : g)}
-                      className="px-3 py-1.5 text-xs border rounded-sm transition-all"
-                      style={{ backgroundColor: favGenre === g ? '#8B0000' : 'transparent', borderColor: favGenre === g ? '#8B0000' : 'rgba(255,255,255,0.1)', color: favGenre === g ? '#fff' : 'rgba(255,255,255,0.4)' }}>
+                      className="px-3 py-1.5 text-xs border rounded-full transition-all"
+                      style={{
+                        backgroundColor: favGenre === g ? '#1d4ed8' : 'transparent',
+                        borderColor: favGenre === g ? '#1d4ed8' : '#e4e4e7',
+                        color: favGenre === g ? '#fff' : '#71717a'
+                      }}>
                       {g}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={saveProfile} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-xs border rounded-sm" style={{ borderColor: '#8B0000', backgroundColor: '#8B0000', color: '#fff' }}>
+                <button onClick={saveProfile} disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">
                   {saving ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name="Check" size={12} />} Сохранить
                 </button>
-                <button onClick={() => setEditing(false)} className="px-4 py-2 text-xs border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>
+                <button onClick={() => setEditing(false)}
+                  className="px-4 py-2 text-xs border border-zinc-200 rounded-lg text-zinc-500 hover:bg-zinc-50 transition-colors">
                   Отмена
                 </button>
               </div>
             </div>
           ) : (
-            <div className="border rounded-sm p-5 mb-6" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+            <div className="border border-zinc-100 rounded-xl p-5 mb-6 bg-white">
               {user.bio
-                ? <p className="text-white/50 text-sm leading-6 mb-3">{user.bio}</p>
-                : <p className="text-white/20 text-sm italic mb-3">Описание не заполнено</p>
+                ? <p className="text-zinc-600 text-sm leading-6 mb-3">{user.bio}</p>
+                : <p className="text-zinc-300 text-sm italic mb-3">Описание не заполнено</p>
               }
               {user.favorite_genre && (
-                <p className="text-white/30 text-xs mb-3">Любимый жанр: <span className="text-white/50">{user.favorite_genre}</span></p>
+                <p className="text-zinc-400 text-xs mb-3">Любимый жанр: <span className="text-zinc-600">{user.favorite_genre}</span></p>
               )}
-              <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-white/25 hover:text-white/50 transition-colors text-xs">
+              <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-zinc-300 hover:text-blue-500 transition-colors text-xs">
                 <Icon name="Pencil" size={12} /> Редактировать
               </button>
             </div>
           )}
 
-          {/* Вкладки */}
-          <div className="flex border-b mb-6" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="flex border-b border-zinc-100 mb-6">
             {([
               { id: 'profile', label: 'Профиль', icon: 'User' },
               { id: 'bookmarks', label: 'Закладки', icon: 'Bookmark' },
@@ -261,7 +262,10 @@ export default function Account() {
             ] as const).map(t => (
               <button key={t.id} onClick={() => setActiveTab(t.id)}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-xs border-b-2 -mb-px transition-all whitespace-nowrap"
-                style={{ borderColor: activeTab === t.id ? '#8B0000' : 'transparent', color: activeTab === t.id ? '#fff' : 'rgba(255,255,255,0.35)' }}>
+                style={{
+                  borderColor: activeTab === t.id ? '#2563eb' : 'transparent',
+                  color: activeTab === t.id ? '#2563eb' : '#a1a1aa'
+                }}>
                 <Icon name={t.icon} size={12} /> {t.label}
               </button>
             ))}
@@ -270,29 +274,30 @@ export default function Account() {
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
               <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                {/* Уровень (для обычных пользователей) */}
                 {user.role === 'user' && (
-                  <div className="border rounded-sm px-5 py-4 mb-6 flex items-center gap-4" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                  <div className="border border-zinc-100 rounded-xl px-5 py-4 mb-6 flex items-center gap-4 bg-white">
                     <div className="flex-1">
-                      <p className="text-white/25 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
+                      <p className="text-zinc-400 text-xs uppercase tracking-wider mb-1">Твой уровень</p>
                       <UserName username={user.username} stories_read={user.stories_read} className="text-base" />
-                      <p className="text-white/20 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
+                      <p className="text-zinc-300 text-xs mt-1">{getLevelByReads(user.stories_read).title} · {user.stories_read} историй прочитано</p>
                     </div>
                   </div>
                 )}
-                {/* Действия */}
                 <div className="space-y-2">
                   {(user.role === 'admin' || user.role === 'moderator') && (
-                    <button onClick={() => navigate('/admin')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-                      <span className="flex items-center gap-3"><Icon name="Shield" size={15} className="text-[#8B0000]" /> Панель модерации</span>
-                      <Icon name="ChevronRight" size={15} className="text-white/20" />
+                    <button onClick={() => navigate('/admin')}
+                      className="w-full flex items-center justify-between px-4 py-3 border border-zinc-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/50 transition-all text-sm bg-white">
+                      <span className="flex items-center gap-3 text-zinc-600"><Icon name="Shield" size={15} className="text-blue-500" /> Панель модерации</span>
+                      <Icon name="ChevronRight" size={15} className="text-zinc-300" />
                     </button>
                   )}
-                  <button onClick={() => navigate('/submit')} className="w-full flex items-center justify-between px-4 py-3 border rounded-sm transition-all hover:border-white/20 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
-                    <span className="flex items-center gap-3"><Icon name="PenLine" size={15} className="text-[#8B0000]" /> Предложить историю</span>
-                    <Icon name="ChevronRight" size={15} className="text-white/20" />
+                  <button onClick={() => navigate('/submit')}
+                    className="w-full flex items-center justify-between px-4 py-3 border border-zinc-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/50 transition-all text-sm bg-white">
+                    <span className="flex items-center gap-3 text-zinc-600"><Icon name="PenLine" size={15} className="text-blue-500" /> Предложить историю</span>
+                    <Icon name="ChevronRight" size={15} className="text-zinc-300" />
                   </button>
-                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 border rounded-sm transition-all text-sm mt-4" style={{ borderColor: 'rgba(139,0,0,0.2)', color: 'rgba(139,0,0,0.6)' }}>
+                  <button onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 border border-red-100 rounded-xl text-sm mt-4 text-red-400 hover:bg-red-50 transition-colors bg-white">
                     <Icon name="LogOut" size={15} /> Выйти из аккаунта
                   </button>
                 </div>
@@ -301,24 +306,23 @@ export default function Account() {
 
             {activeTab === 'bookmarks' && (
               <motion.div key="bookmarks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                {bookmarksLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-white/20 animate-spin" /></div>}
+                {bookmarksLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-zinc-300 animate-spin" /></div>}
                 {!bookmarksLoading && bookmarks.length === 0 && (
                   <div className="py-10 text-center">
-                    <Icon name="BookmarkX" size={24} className="mx-auto mb-3 text-white/15" />
-                    <p className="text-white/25 text-sm">Закладок пока нет</p>
-                    <button onClick={() => navigate('/catalog')} className="mt-3 text-xs text-[#8B0000] hover:text-red-400 transition-colors">Перейти в каталог</button>
+                    <Icon name="BookmarkX" size={24} className="mx-auto mb-3 text-zinc-200" />
+                    <p className="text-zinc-400 text-sm">Закладок пока нет</p>
+                    <button onClick={() => navigate('/catalog')} className="mt-3 text-xs text-blue-500 hover:text-blue-700 transition-colors">Перейти в каталог</button>
                   </div>
                 )}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {bookmarks.map(s => (
                     <button key={s.id} onClick={() => navigate(`/story/${s.id}`)}
-                      className="w-full text-left p-4 border rounded-sm transition-all hover:border-white/15 group"
-                      style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] px-1.5 py-0.5 border rounded-sm" style={{ borderColor: '#8B0000', color: '#8B0000' }}>{s.genre}</span>
+                      className="w-full text-left p-4 border border-zinc-100 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group bg-white">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] px-2 py-0.5 border border-blue-200 rounded-full text-blue-600 bg-blue-50">{s.genre}</span>
                       </div>
-                      <p className="text-white/80 text-sm group-hover:text-red-400 transition-colors mb-1 truncate" style={{ fontFamily: "'Cinzel Decorative', serif" }}>{s.title}</p>
-                      <p className="text-white/30 text-xs">{s.author_name}</p>
+                      <p className="text-zinc-800 text-sm group-hover:text-blue-700 transition-colors mb-1 truncate" style={{ fontFamily: "'Playfair Display', serif" }}>{s.title}</p>
+                      <p className="text-zinc-400 text-xs">{s.author_name}</p>
                     </button>
                   ))}
                 </div>
@@ -327,21 +331,26 @@ export default function Account() {
 
             {activeTab === 'leaderboard' && (
               <motion.div key="leaderboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                {leaderboardLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-white/20 animate-spin" /></div>}
+                {leaderboardLoading && <div className="py-10 flex justify-center"><Icon name="Loader" size={18} className="text-zinc-300 animate-spin" /></div>}
                 <div className="space-y-2">
                   {leaderboard.map((entry, i) => (
-                    <div key={entry.author_name} className="flex items-center gap-4 px-4 py-3 border rounded-sm" style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <span className="text-white/20 text-sm w-5 text-right flex-shrink-0"
-                        style={{ color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : undefined }}>
+                    <div key={entry.author_name} className="flex items-center gap-4 px-4 py-3 border border-zinc-100 rounded-xl bg-white">
+                      <span className="text-sm w-5 text-right flex-shrink-0 font-medium"
+                        style={{ color: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : '#d1d5db' }}>
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white/75 text-sm truncate">{entry.author_name}</p>
-                        <p className="text-white/25 text-xs">{entry.stories_count} {entry.stories_count === 1 ? 'история' : 'историй'}</p>
+                        <p className="text-zinc-700 text-sm truncate font-medium">{entry.author_name}</p>
+                        <p className="text-zinc-400 text-xs">{entry.stories_count} {entry.stories_count === 1 ? 'история' : 'историй'}</p>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-white/30 flex-shrink-0">
-                        <span className="flex items-center gap-1"><Icon name="Heart" size={11} style={{ color: entry.total_likes > 0 ? '#8B0000' : undefined }} />{entry.total_likes}</span>
-                        <span className="flex items-center gap-1"><Icon name="Eye" size={11} />{entry.total_views}</span>
+                      <div className="flex items-center gap-3 text-xs text-zinc-300 flex-shrink-0">
+                        <span className="flex items-center gap-1">
+                          <Icon name="Heart" size={11} className={entry.total_likes > 0 ? 'text-rose-400' : ''} />
+                          {entry.total_likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="Eye" size={11} />{entry.total_views}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -349,8 +358,6 @@ export default function Account() {
               </motion.div>
             )}
           </AnimatePresence>
-
-
 
         </motion.div>
       </main>

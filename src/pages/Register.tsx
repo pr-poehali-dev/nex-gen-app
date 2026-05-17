@@ -33,79 +33,76 @@ export default function Register() {
     setLoading(false)
   }
 
-  const inputClass = "w-full bg-transparent border-b border-white/10 px-0 py-3 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20"
+  const inputClass = "w-full border border-zinc-200 rounded-lg px-4 py-3 text-zinc-800 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all placeholder:text-zinc-300 bg-white"
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.18) 0%, transparent 60%)' }} />
-      <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.25), transparent)' }} />
-
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50" style={{ fontFamily: "'Inter', sans-serif" }}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-sm px-6 relative"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-sm px-6"
       >
         <button
           onClick={() => navigate('/')}
-          className="text-white/25 hover:text-white transition-colors tracking-widest text-sm uppercase mb-12 flex items-center gap-2"
+          className="text-zinc-400 hover:text-zinc-700 transition-colors text-sm mb-10 flex items-center gap-2"
         >
-          <Icon name="ArrowLeft" size={12} /> ShadowTales
+          <Icon name="ArrowLeft" size={14} />
+          ShadowTales
         </button>
 
         {success ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="w-8 h-px mb-8" style={{ backgroundColor: '#8B0000' }} />
-            <h1 className="text-3xl text-white mb-4" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+            <div className="w-8 h-0.5 mb-8 bg-blue-600" />
+            <h1 className="text-3xl text-zinc-900 mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
               Заявка отправлена
             </h1>
-            <p className="text-white/30 text-sm leading-7 mb-8">
+            <p className="text-zinc-500 text-sm leading-7 mb-8">
               Администратор рассмотрит твою заявку. После одобрения ты сможешь войти.
             </p>
-            <Link to="/login" className="text-xs tracking-widest uppercase text-[#8B0000] hover:text-red-400 transition-colors flex items-center gap-2">
-              <Icon name="ArrowRight" size={12} /> Перейти ко входу
+            <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-2">
+              <Icon name="ArrowRight" size={14} /> Перейти ко входу
             </Link>
           </motion.div>
         ) : (
           <>
-            <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+            <h1 className="text-3xl text-zinc-900 mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
               Регистрация
             </h1>
-            <p className="text-white/25 text-sm mb-10">Заявка рассматривается администратором</p>
+            <p className="text-zinc-400 text-sm mb-8">Заявка рассматривается администратором</p>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Имя пользователя</label>
+                <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Имя пользователя</label>
                 <input className={inputClass} placeholder="Придумай ник" value={form.username} onChange={e => set('username', e.target.value)} required autoFocus />
               </div>
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Email</label>
+                <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Email</label>
                 <input className={inputClass} type="email" placeholder="email@mail.ru" value={form.email} onChange={e => set('email', e.target.value)} required />
               </div>
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Пароль</label>
-                <input className={inputClass} type="password" placeholder="•••••• (мин. 6 символов)" value={form.password} onChange={e => set('password', e.target.value)} required />
+                <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Пароль</label>
+                <input className={inputClass} type="password" placeholder="мин. 6 символов" value={form.password} onChange={e => set('password', e.target.value)} required />
               </div>
               <div>
-                <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Повтори пароль</label>
+                <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Повтори пароль</label>
                 <input className={inputClass} type="password" placeholder="••••••" value={form.password2} onChange={e => set('password2', e.target.value)} required />
               </div>
 
-              {error && <p className="text-sm" style={{ color: '#cc3333' }}>{error}</p>}
+              {error && <p className="text-sm text-red-500">{error}</p>}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 text-xs tracking-widest uppercase border rounded-sm flex items-center justify-center gap-2 transition-all duration-300"
-                style={{ backgroundColor: '#8B0000', borderColor: '#8B0000', color: '#fff' }}
+                className="w-full py-3 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 mt-2"
               >
-                {loading ? <><Icon name="Loader" size={13} className="animate-spin" /> Отправляем...</> : 'Подать заявку'}
+                {loading ? <><Icon name="Loader" size={14} className="animate-spin" /> Отправляем...</> : 'Подать заявку'}
               </button>
             </form>
 
-            <p className="text-white/20 text-xs mt-8 text-center">
+            <p className="text-zinc-400 text-xs mt-6 text-center">
               Уже есть аккаунт?{' '}
-              <Link to="/login" className="text-[#8B0000] hover:text-red-400 transition-colors">Войти</Link>
+              <Link to="/login" className="text-blue-600 hover:text-blue-800 transition-colors">Войти</Link>
             </p>
           </>
         )}

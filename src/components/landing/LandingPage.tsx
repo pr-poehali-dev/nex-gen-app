@@ -55,13 +55,11 @@ export default function LandingPage() {
           <button
             key={section.id}
             className={`w-2 h-2 rounded-full my-2 transition-all duration-300 ${
-              index === activeSection
-                ? 'scale-150'
-                : 'opacity-40'
+              index === activeSection ? 'scale-150' : 'opacity-30'
             }`}
             style={{
-              backgroundColor: index === activeSection ? '#8B0000' : '#555',
-              boxShadow: index === activeSection ? '0 0 8px rgba(139,0,0,0.8)' : 'none',
+              backgroundColor: index === activeSection ? '#2563eb' : '#94a3b8',
+              boxShadow: index === activeSection ? '0 0 8px rgba(37,99,235,0.5)' : 'none',
             }}
             onClick={() => handleNavClick(index)}
           />
@@ -69,7 +67,7 @@ export default function LandingPage() {
       </nav>
       <motion.div
         className="fixed top-0 left-0 right-0 h-0.5 origin-left z-30"
-        style={{ scaleX, backgroundColor: '#8B0000', boxShadow: '0 0 8px rgba(139,0,0,0.8)' }}
+        style={{ scaleX, backgroundColor: '#2563eb' }}
       />
       <div
         ref={containerRef}

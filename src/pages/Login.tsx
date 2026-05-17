@@ -34,56 +34,53 @@ export default function Login() {
     setLoading(false)
   }
 
-  const inputClass = "w-full bg-transparent border-b border-white/10 px-0 py-3 text-white text-sm outline-none focus:border-[#8B0000] transition-colors placeholder:text-white/20"
+  const inputClass = "w-full border border-zinc-200 rounded-lg px-4 py-3 text-zinc-800 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all placeholder:text-zinc-300 bg-white"
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative" style={{ backgroundColor: '#080808', fontFamily: "'Inter', sans-serif" }}>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top center, rgba(60,0,0,0.18) 0%, transparent 60%)' }} />
-      <div className="absolute left-0 top-0 h-full w-px" style={{ background: 'linear-gradient(to bottom, transparent, rgba(139,0,0,0.25), transparent)' }} />
-
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50" style={{ fontFamily: "'Inter', sans-serif" }}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-sm px-6 relative"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-sm px-6"
       >
         <button
           onClick={() => navigate('/')}
-          className="text-white/25 hover:text-white transition-colors tracking-widest text-sm uppercase mb-12 flex items-center gap-2"
+          className="text-zinc-400 hover:text-zinc-700 transition-colors text-sm mb-10 flex items-center gap-2"
         >
-          <Icon name="ArrowLeft" size={12} /> ShadowTales
+          <Icon name="ArrowLeft" size={14} />
+          ShadowTales
         </button>
 
-        <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+        <h1 className="text-3xl text-zinc-900 mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
           Вход
         </h1>
-        <p className="text-white/25 text-sm mb-10">Добро пожаловать обратно</p>
+        <p className="text-zinc-400 text-sm mb-8">Добро пожаловать обратно</p>
 
-        <form onSubmit={handleSubmit} className="space-y-7">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Логин или email</label>
+            <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Логин или email</label>
             <input className={inputClass} placeholder="username или email" value={form.login} onChange={e => set('login', e.target.value)} required autoFocus />
           </div>
           <div>
-            <label className="block text-white/30 text-xs uppercase tracking-wider mb-3">Пароль</label>
+            <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">Пароль</label>
             <input className={inputClass} type="password" placeholder="••••••••" value={form.password} onChange={e => set('password', e.target.value)} required />
           </div>
 
-          {error && <p className="text-sm" style={{ color: '#cc3333' }}>{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 text-xs tracking-widest uppercase border rounded-sm flex items-center justify-center gap-2 transition-all duration-300"
-            style={{ backgroundColor: '#8B0000', borderColor: '#8B0000', color: '#fff' }}
+            className="w-full py-3 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 mt-2"
           >
-            {loading ? <><Icon name="Loader" size={13} className="animate-spin" /> Входим...</> : 'Войти'}
+            {loading ? <><Icon name="Loader" size={14} className="animate-spin" /> Входим...</> : 'Войти'}
           </button>
         </form>
 
-        <p className="text-white/20 text-xs mt-8 text-center">
+        <p className="text-zinc-400 text-xs mt-6 text-center">
           Нет аккаунта?{' '}
-          <Link to="/register" className="text-[#8B0000] hover:text-red-400 transition-colors">Подать заявку</Link>
+          <Link to="/register" className="text-blue-600 hover:text-blue-800 transition-colors">Подать заявку</Link>
         </p>
       </motion.div>
     </div>

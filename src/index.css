@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=IM+Fell+English:ital@0;1&family=Inter:wght@300;400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -26,15 +26,6 @@
   }
   .animate-name-blood {
     animation: nameBlood 2s ease-in-out infinite;
-  }
-  .horror-glow {
-    text-shadow:
-      0 0 20px rgba(139, 0, 0, 0.8),
-      0 0 60px rgba(139, 0, 0, 0.4);
-  }
-
-  .blood-line {
-    background: linear-gradient(90deg, transparent, #8b0000, transparent);
   }
 
   .animate-badge-glitch {
@@ -234,28 +225,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3%;
-    --foreground: 0 0% 90%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 90%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 90%;
-    --primary: 0 100% 27%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 50%;
-    --accent: 0 80% 30%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 40%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
-    --ring: 0 100% 27%;
-    --radius: 0.3rem;
-    --horror-red: 139, 0, 0;
-    --horror-dark: 8, 8, 8;
+    --background: 0 0% 99%;
+    --foreground: 220 15% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 12%;
+    --primary: 221 83% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 25%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 221 83% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 221 83% 40%;
+    --radius: 0.5rem;
   }
 
   * {
@@ -265,16 +254,14 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Inter", sans-serif;
-    background-color: #080808;
-    cursor: default;
+    background-color: #fafafa;
   }
 
   h1,
   h2,
   h3 {
-    font-family: "Cinzel Decorative", serif;
-    font-style: normal;
-    letter-spacing: 0.02em;
+    font-family: "Playfair Display", serif;
+    letter-spacing: -0.01em;
   }
 
   html {
@@ -286,16 +273,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #080808;
+    background: #f4f4f5;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #8b0000;
+    background: #c7d2e7;
     border-radius: 2px;
   }
 
   ::selection {
-    background: rgba(139, 0, 0, 0.5);
-    color: #fff;
+    background: rgba(37, 99, 235, 0.15);
+    color: #1e3a8a;
   }
 }
